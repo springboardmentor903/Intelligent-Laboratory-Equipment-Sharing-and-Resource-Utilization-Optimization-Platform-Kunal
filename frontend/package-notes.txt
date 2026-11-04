@@ -1,0 +1,15 @@
+Lab Resource Platform frontend update bundle
+
+Copy the contents of src/ into your existing frontend/src/ directory, merging folders rather than deleting unrelated files.
+Keep your existing package.json. Required packages already discussed: react-router-dom, axios, lucide-react.
+
+Backend assumptions based on current conversation:
+POST /api/users/register
+POST /api/users/login -> { token, user: { fullName, email, ... } }
+GET /api/institutions -> [{ id, name, ... }]
+GET /api/departments?institutionId=1 -> [{ id, name, institutionId }]
+GET /api/resources -> resource list
+GET /api/bookings -> booking list
+Google OAuth starts at http://localhost:8080/oauth2/authorization/google
+
+Important: your existing registration DTO was confirmed to accept fullName, email, password, phone only. To persist roleId, institutionId and departmentId, backend DTO/service must be updated. This bundle sends these fields but cannot make the backend persist them by itself. SYSTEM_ADMIN is intentionally not selectable in public registration.

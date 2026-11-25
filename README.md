@@ -10,24 +10,24 @@ A centralized web-based platform designed to manage laboratory equipment, simpli
 
 ## 1. Project Overview
 
-Laboratories in colleges and institutions use different types of equipment for experiments, research, and academic activities. Managing these resources manually can create problems such as booking conflicts, poor resource utilization, lack of availability information, and difficulty tracking equipment usage.
+The Intelligent Laboratory Equipment Sharing and Resource Utilization Optimization Platform is a full-stack web application developed to simplify laboratory operations across institutions.
 
-The Intelligent Laboratory Equipment Sharing and Resource Utilization Optimization Platform aims to solve these problems through a centralized digital platform.
+It provides a centralized system for managing laboratory equipment, users, institutions, departments, bookings, maintenance, calibration, notifications, resource sharing, billing, and reporting.
 
-The application provides a common interface for managing laboratory resources, users, bookings, maintenance requests, and other laboratory operations.
-
-It consists of a React-based frontend, a Spring Boot backend, and a PostgreSQL database.
+The platform aims to reduce manual work, improve equipment utilization, prevent booking conflicts, and provide better visibility into laboratory resources.
 
 ## 2. Project Objectives
 
-- Provide centralized management of laboratory equipment.
-- Make equipment availability easier to check.
-- Simplify laboratory equipment booking.
-- Reduce booking conflicts and improve resource utilization.
-- Manage users and their roles.
-- Support institution and department management.
-- Maintain booking and resource information.
-- Provide a foundation for maintenance and resource-sharing workflows.
+- Centralized management of laboratory equipment.
+- Simplified equipment booking and availability tracking.
+- Improved resource utilization across departments.
+- Role-based authentication and authorization.
+- Maintenance and preventive maintenance management.
+- Equipment calibration tracking and reminders.
+- Document and certificate storage.
+- Notifications and technician task management.
+- Usage charges, budgets, invoices, and financial summaries.
+- Reporting and analytics for institutional decision-making.
 
 ## 3. Technology Stack
 
@@ -35,11 +35,11 @@ It consists of a React-based frontend, a Spring Boot backend, and a PostgreSQL d
 |---|---|
 | Frontend | React.js |
 | Programming Language | JavaScript |
-| Styling | Tailwind CSS |
+| Styling | CSS, Tailwind CSS |
 | Routing | React Router |
 | HTTP Client | Axios |
 | Icons | Lucide React |
-| Frontend Build Tool | Vite |
+| Build Tool | Vite |
 | Backend | Java, Spring Boot |
 | Backend Framework | Spring MVC |
 | ORM | Hibernate |
@@ -51,183 +51,236 @@ It consists of a React-based frontend, a Spring Boot backend, and a PostgreSQL d
 | API Testing | Postman |
 | Version Control | Git and GitHub |
 
-Additional integrations configured or planned in the backend include Redis, Elasticsearch, Apache Kafka, AWS S3, and email services. These require separate setup and credentials.
+Additional integrations include or may require separate configuration for Redis, Elasticsearch, Apache Kafka, AWS S3, Firebase, and email/SMS services.
 
 ## 4. System Architecture
 
 The application follows a client-server architecture.
 
 ```text
-             USER
-               |
-               v
-      +-------------------+
-      |   React Frontend  |
-      |                   |
-      | Pages & Components|
-      | Authentication    |
-      | Dashboard         |
-      +---------+---------+
+              USER
                 |
-                | HTTP Requests
-                | Axios
                 v
-      +-------------------+
-      | Spring Boot API   |
-      |                   |
-      | REST Controllers  |
-      | Service Layer     |
-      | Repository Layer  |
-      | Spring Security   |
-      +---------+---------+
-                |
-                | JPA / Hibernate
-                v
-      +-------------------+
-      |   PostgreSQL      |
-      |                   |
-      | Users             |
-      | Resources         |
-      | Bookings          |
-      | Departments       |
-      | Institutions      |
-      +-------------------+
+       +-------------------+
+       |   React Frontend  |
+       |                   |
+       | Pages & Components|
+       | Authentication    |
+       | Dashboards        |
+       +---------+---------+
+                 |
+                 | HTTP / REST APIs
+                 | Axios
+                 v
+       +-------------------+
+       | Spring Boot API   |
+       |                   |
+       | REST Controllers  |
+       | Service Layer     |
+       | Repository Layer  |
+       | Spring Security   |
+       +---------+---------+
+                 |
+                 | JPA / Hibernate
+                 v
+       +-------------------+
+       |   PostgreSQL      |
+       |                   |
+       | Users             |
+       | Resources         |
+       | Bookings          |
+       | Maintenance       |
+       | Billing           |
+       | Notifications     |
+       +-------------------+
 ```
 
 ### Architecture Description
 
-1. Frontend: Provides the user interface using React.
-2. API Layer: Handles communication between frontend and backend using Axios.
-3. Controller Layer: Handles incoming REST API requests.
-4. Service Layer: Contains application business logic.
-5. Repository Layer: Communicates with the database using Spring Data JPA.
-6. Database Layer: Stores application information in PostgreSQL.
+1. **Frontend:** React provides the user interface.
+2. **API Layer:** Axios communicates with the Spring Boot backend.
+3. **Controller Layer:** Handles REST API requests.
+4. **Service Layer:** Contains business logic.
+5. **Repository Layer:** Uses Spring Data JPA to access data.
+6. **Database Layer:** PostgreSQL stores application information.
 
-## 5. Main Modules
+## 5. Main Modules and Features
 
-### User Management
+### 5.1 User and Authentication Management
 - User registration and login.
-- User profile management.
+- Profile management.
+- JWT-based authentication.
 - Role-based access control.
-- Authentication and authorization.
+- Google OAuth2 integration.
 
-### Institution Management
+### 5.2 Institution and Department Management
 - Institution information management.
-- Institution-related operations.
-
-### Department Management
 - Department creation and management.
-- Department information associated with institutions.
+- Institution working-hours configuration.
+- Institution-level resource administration.
 
-### Equipment and Resource Management
+### 5.3 Equipment and Resource Management
 - Laboratory equipment management.
-- Resource information and availability.
-- Resource-related operations.
+- Resource availability information.
+- Equipment lifecycle information.
+- Resource search and management.
 
-### Booking Management
+### 5.4 Booking Management
 - Equipment booking requests.
-- Booking status management.
-- Booking-related operations and history.
+- Booking approval and rejection.
+- Booking history and status tracking.
+- Booking reminders.
+- Waitlist management and notifications.
 
-### Maintenance Management
-- Maintenance request management.
-- Equipment maintenance-related operations.
+### 5.5 Maintenance Management
+- Maintenance request creation and management.
+- Approval and rejection workflow.
+- Automatic corrective work order creation.
+- Work order assignment and status tracking.
+- Preventive maintenance schedules.
+- Maintenance history.
+- Equipment downtime tracking and analytics.
 
-### Resource Sharing
-- Resource sharing between eligible users or departments.
+### 5.6 Calibration Management
+- Equipment calibration overview.
+- Latest calibration and next due dates.
+- Calibration status tracking.
+- Calibration reminders.
+- Automatic calibration work orders.
+- Calibration completion records.
 
-### Billing Management
-- Billing record management.
+### 5.7 Technician Task Management
+- Technician directory.
+- Technician task assignment.
+- Technician workload overview.
+- Task status tracking.
 
-### Notification Management
-- Notification-related operations.
+### 5.8 Document and Certificate Management
+- Equipment-related document storage.
+- Certificate and manual management.
+- Document access through the application.
 
-### Calibration Management
-- Equipment calibration-related operations.
+### 5.9 Notification Management
+- In-app notifications.
+- Notification preferences.
+- Real-time notification support.
+- Push notification integration.
+- Email and SMS notification services.
+- Notification delivery and retry handling.
+
+### 5.10 Billing and Financial Management
+- Department budget management.
+- Invoice creation and management.
+- Invoice PDF generation.
+- Usage charge management.
+- Equipment cost overview.
+- Financial summary.
+
+### 5.11 Dashboard and Analytics
+- Institution dashboard.
+- Institution equipment analytics.
+- Manager dashboard.
+- Researcher dashboard.
+- Equipment lifecycle information.
+- Resource utilization insights.
+
+### 5.12 Reports Management
+- Report preview.
+- Department usage reports.
+- Maintenance reports.
+- Procurement cost reports.
+- Resource-sharing reports.
+- Report export functionality.
+
+### 5.13 Resource Sharing
+- Resource sharing between eligible users and departments.
+- Resource-sharing operations and management.
 
 ## 6. User Roles
 
-The project defines role-based access for different categories of users.
+The application supports role-based access for different categories of users:
 
-- RESEARCHER_STUDENT
-- LAB_TECHNICIAN
-- LAB_MANAGER
-- DEPARTMENT_HEAD
-- INSTITUTION_ADMIN
-- SYSTEM_ADMIN
+- `RESEARCHER_STUDENT`
+- `LAB_TECHNICIAN`
+- `LAB_MANAGER`
+- `DEPARTMENT_HEAD`
+- `INSTITUTION_ADMIN`
+- `SYSTEM_ADMIN`
 
-Each role is intended to have access according to its responsibilities and authorization permissions.
+Each role receives access according to its responsibilities and authorization permissions.
 
 ## 7. Booking Workflow
-
-The booking process is designed around the following workflow:
 
 1. User logs into the application.
 2. User checks available laboratory equipment.
 3. User selects the required equipment.
 4. User submits a booking request.
-5. Backend validates the booking request and availability.
-6. Booking request is created with PENDING status.
+5. Backend validates availability and booking details.
+6. Booking request is created.
 7. Authorized staff reviews the request.
 8. Request is approved or rejected.
 9. Equipment usage and booking status can be tracked.
 
 ### Booking Status
 
-- PENDING
-- APPROVED
-- REJECTED
-- IN_USE
-- COMPLETED
-- CANCELLED
-- NO_SHOW
+- `PENDING`
+- `APPROVED`
+- `REJECTED`
+- `IN_USE`
+- `COMPLETED`
+- `CANCELLED`
+- `NO_SHOW`
 
 ## 8. Frontend Features and Pages
 
-The React frontend contains the following pages and components:
+The React frontend includes pages and components for:
 
-- Home
-- Login
-- Registration
-- Dashboard
-- Equipment
-- Bookings
-- Maintenance
-- Profile
-- Forgot Password
-- Reset Password
-- OAuth Callback
-- Protected Routes
-- Application Layout
-
-The frontend communicates with the Spring Boot backend through API requests.
+- Home and authentication.
+- Registration and login.
+- Dashboard and role-based dashboards.
+- Equipment management.
+- Bookings and booking details.
+- Maintenance requests.
+- Maintenance overview and history.
+- Preventive maintenance schedules.
+- Work orders.
+- Calibration overview and reminders.
+- Technician tasks and directory.
+- Document management.
+- Notifications and preferences.
+- Reports and analytics.
+- Budgets and financial summaries.
+- Invoices and usage charges.
+- User profile and protected routes.
 
 ## 9. Backend Modules
 
-The backend follows a modular package structure.
+The Spring Boot backend follows a modular package structure.
 
-Major backend packages include:
+Major packages include:
 
-- billing
-- booking
-- common
-- department
-- institution
-- maintenance
-- notification
-- resource
-- sharing
-- user
+- `billing`
+- `booking`
+- `budget`
+- `common`
+- `dashboard`
+- `department`
+- `institution`
+- `maintenance`
+- `notification`
+- `report`
+- `resource`
+- `sharing`
+- `storage`
+- `usage`
+- `user`
 
-The backend uses REST controllers, services, repositories, entities, and security components to organize application functionality.
+Each module uses controllers, services, repositories, DTOs, entities, and supporting configuration classes as required.
 
 ## 10. Project Folder Structure
 
 ```text
 lab-resource-platform/
-│
-├── .gitignore
-├── README.md
 │
 ├── frontend/
 │   ├── public/
@@ -236,30 +289,36 @@ lab-resource-platform/
 │   │   ├── components/
 │   │   ├── context/
 │   │   ├── pages/
+│   │   │   ├── notifications/
+│   │   │   ├── t9/
+│   │   │   └── t10/
+│   │   ├── services/
+│   │   ├── styles/
 │   │   ├── App.jsx
 │   │   └── main.jsx
-│   │
 │   ├── package.json
 │   └── vite.config.js
 │
 └── lab-resource-platform/
     ├── pom.xml
-    ├── mvnw
-    ├── mvnw.cmd
-    │
     └── src/
         └── main/
             ├── java/
             │   └── com/labresource/platform/
             │       ├── billing/
             │       ├── booking/
+            │       ├── budget/
             │       ├── common/
+            │       ├── dashboard/
             │       ├── department/
             │       ├── institution/
             │       ├── maintenance/
             │       ├── notification/
+            │       ├── report/
             │       ├── resource/
             │       ├── sharing/
+            │       ├── storage/
+            │       ├── usage/
             │       └── user/
             │
             └── resources/
@@ -268,7 +327,7 @@ lab-resource-platform/
 
 ## 11. Prerequisites
 
-Install the following software before running the project:
+Install the following software:
 
 - Java JDK 17
 - Node.js and npm
@@ -277,7 +336,7 @@ Install the following software before running the project:
 - IntelliJ IDEA (recommended)
 - Postman (for API testing)
 
-Optional services such as Redis, Elasticsearch, and Kafka need separate installation and configuration if their integrations are used.
+Optional integrations such as Redis, Elasticsearch, and Kafka require separate installation and configuration.
 
 ## 12. Installation and Setup
 
@@ -287,33 +346,29 @@ Optional services such as Redis, Elasticsearch, and Kafka need separate installa
 git clone https://github.com/springboardmentor903/Intelligent-Laboratory-Equipment-Sharing-and-Resource-Utilization-Optimization-Platform-Kunal.git
 ```
 
-Move into the project directory:
-
 ```bash
 cd Intelligent-Laboratory-Equipment-Sharing-and-Resource-Utilization-Optimization-Platform-Kunal
 ```
 
 ### Step 2: Database Setup
 
-1. Open PostgreSQL or pgAdmin.
-2. Create a database named `labdb`.
-3. Configure the database username and password in the backend environment.
-
-SQL command:
+Open PostgreSQL or pgAdmin and create a database named `labdb`.
 
 ```sql
 CREATE DATABASE labdb;
 ```
 
+Configure the database username and password according to your local environment.
+
 ### Step 3: Backend Setup
 
-Open a terminal inside the backend folder:
+Open a terminal inside the backend directory:
 
 ```bash
 cd lab-resource-platform
 ```
 
-Set the required environment variables in PowerShell according to your local configuration:
+Set the required environment variables in PowerShell:
 
 ```powershell
 $env:DB_PASSWORD="your_database_password"
@@ -337,7 +392,7 @@ http://localhost:8080
 
 ### Step 4: Frontend Setup
 
-Open another terminal and navigate to the frontend folder:
+Open another terminal:
 
 ```bash
 cd frontend
@@ -376,53 +431,43 @@ Keep both frontend and backend applications running during development.
 | Elasticsearch Port | 9200 |
 | Kafka Port | 9092 |
 
-Database passwords, JWT secrets, OAuth secrets, and email credentials should be kept private and should never be committed to GitHub.
+Database passwords, JWT secrets, OAuth credentials, and email credentials must be kept private. Never commit actual secrets to GitHub.
 
 ## 14. API Development
 
-The Spring Boot backend provides REST controllers for:
+The backend provides REST APIs for:
 
-- Users
-- Roles
-- Institutions
-- Departments
-- Resources
-- Bookings
-- Maintenance Requests
-- Notifications
-- Billing Records
-- Resource Sharing
-- Calibration
+- Users and roles.
+- Institutions and departments.
+- Equipment and resources.
+- Bookings and waitlists.
+- Maintenance requests and work orders.
+- Calibration and technician tasks.
+- Notifications and preferences.
+- Documents and storage.
+- Budgets, invoices, and usage charges.
+- Dashboards, analytics, and reports.
+- Resource sharing.
 
-API endpoints can be tested using Postman.
-
-The exact endpoint paths, HTTP methods, request formats, and authorization requirements should be checked in the respective controller classes.
+Check the respective controller classes for exact endpoint paths, HTTP methods, request formats, and authorization requirements.
 
 ## 15. Security
 
 The application uses Spring Security and JWT-based authentication.
 
-Security-related objectives include:
+Security features and objectives include:
 
-- Authentication of users.
-- Authorization based on assigned roles.
-- Protection of restricted API endpoints.
+- User authentication.
+- Role-based authorization.
+- Protected API endpoints.
 - Secure password handling.
-- Environment-based configuration of sensitive credentials.
+- Environment-based configuration of credentials.
 
 Production deployment should additionally use HTTPS, secure secret management, appropriate CORS settings, and database migration practices.
 
-## 16. Testing
+## 16. Testing and Build Commands
 
-The following tools and checks can be used during development:
-
-- Postman for backend API testing.
-- Browser developer tools for frontend debugging.
-- PostgreSQL and pgAdmin for database verification.
-- Maven for backend build verification.
-- npm scripts for frontend development and build verification.
-
-Frontend commands:
+### Frontend
 
 ```bash
 npm run dev
@@ -430,61 +475,63 @@ npm run build
 npm run lint
 ```
 
-Backend build command:
+### Backend
 
 ```powershell
 .\mvnw.cmd clean package
 ```
 
-## 17. Development Milestones
+Postman can be used for API testing. Browser developer tools can be used for frontend debugging, and pgAdmin can be used for database verification.
 
-Project development is organized into milestones.
+## 17. Development Milestones
 
 | Milestone | Work | Status |
 |---|---|---|
 | Milestone 1 | Core platform setup | Completed |
 | Milestone 2 | Authentication and resource management | Completed |
-| Milestone 3 | Further platform development | Upcoming |
-| Future Milestones | Additional modules and enhancements | Planned |
+| Milestone 3 | Maintenance, calibration, notifications, documents, dashboards, reports, billing and usage management | Completed |
+| Future Milestones | Further enhancements and deployment | Planned |
 
-Milestone 1 and Milestone 2 have been committed together.
+### Milestone 3 Highlights
 
-Initial Git commit:
-
-```text
-5c93605
-```
-
-Commit message:
-
-```text
-Milestone 1-2: Core Platform Setup, Authentication and Resource Management
-```
+- Maintenance requests, work orders, preventive schedules, and downtime.
+- Calibration tracking, reminders, and technician tasks.
+- Certificate, manual, and document storage.
+- Notification management and delivery support.
+- Institution dashboards and analytics.
+- Reports and export functionality.
+- Budget, invoice, and financial management.
+- Usage charges and cost overview.
 
 ## 18. Future Enhancements
 
 Possible future improvements include:
 
 - Advanced equipment search and filtering.
-- Resource utilization analytics.
-- Automated booking notifications.
-- Equipment maintenance scheduling.
-- Improved resource-sharing workflows.
-- Detailed usage reports.
-- Search optimization using Elasticsearch.
-- Caching using Redis.
-- Event processing using Kafka.
-- Cloud-based file storage.
-
-These enhancements will be added and verified as development progresses.
+- Further resource utilization optimization.
+- Enhanced analytics and reporting.
+- Improved cloud deployment.
+- Additional notification integrations.
+- Performance optimization and scalability improvements.
 
 ## 19. Version Control
 
-Git and GitHub are used to maintain project source code and milestone-wise development history.
+Git and GitHub are used for source code management and milestone-wise development history.
 
-Repository:
+**Repository:**  
+https://github.com/springboardmentor903/Intelligent-Laboratory-Equipment-Sharing-and-Resource-Utilization-Optimization-Platform-Kunal
 
-[GitHub Repository](https://github.com/springboardmentor903/Intelligent-Laboratory-Equipment-Sharing-and-Resource-Utilization-Optimization-Platform-Kunal)
+### Recent Milestone 3 Commit
+
+```text
+4ee4ed6
+```
+
+Commit message:
+
+```text
+Complete Milestone 3 implementation
+```
 
 ## 20. Author
 

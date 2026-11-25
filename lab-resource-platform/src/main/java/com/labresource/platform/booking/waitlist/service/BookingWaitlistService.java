@@ -54,20 +54,7 @@ public class BookingWaitlistService {
                 .orElseThrow(() ->
                         new IllegalArgumentException("User not found"));
 
-        if (!Boolean.TRUE.equals(resource.getIsActive())) {
-            throw new IllegalArgumentException(
-                    "This equipment is inactive"
-            );
-        }
-
-        String resourceStatus = resource.getStatus();
-
-        if (!"AVAILABLE".equalsIgnoreCase(resourceStatus)
-                && !"BOOKED".equalsIgnoreCase(resourceStatus)) {
-            throw new IllegalArgumentException(
-                    "This equipment is not accepting waitlist requests"
-            );
-        }
+        validateResourceForWaitlist(resource);
 
         Integer quantity = resource.getQuantity();
 
@@ -172,8 +159,7 @@ public class BookingWaitlistService {
         waitlistRepository.save(entry);
     }
 
-    // MANAGER: Offer next oldest waiting request.
-    // Slot time is taken directly from that waitlist entry.
+    // MANAGER: Offer next oldest waiting request
     @Transactional
     public Map<String, Object> offerNext(
             Long resourceId,
@@ -188,6 +174,9 @@ public class BookingWaitlistService {
                         new IllegalArgumentException("Manager not found"));
 
         checkManagerAccess(manager, resource);
+
+        // Never send offers for equipment that cannot be booked.
+        validateResourceForWaitlist(resource);
 
         List<BookingWaitlist> queue =
                 waitlistRepository
@@ -243,6 +232,24 @@ public class BookingWaitlistService {
         next.setOfferedAt(LocalDateTime.now());
 
         return toResponse(waitlistRepository.save(next));
+    }
+
+    // Shared equipment eligibility check
+    private void validateResourceForWaitlist(Resource resource) {
+        if (!Boolean.TRUE.equals(resource.getIsActive())) {
+            throw new IllegalArgumentException(
+                    "This equipment is inactive"
+            );
+        }
+
+        String resourceStatus = resource.getStatus();
+
+        if (!"AVAILABLE".equalsIgnoreCase(resourceStatus)
+                && !"BOOKED".equalsIgnoreCase(resourceStatus)) {
+            throw new IllegalArgumentException(
+                    "This equipment is not accepting waitlist requests"
+            );
+        }
     }
 
     // Role and resource ownership check

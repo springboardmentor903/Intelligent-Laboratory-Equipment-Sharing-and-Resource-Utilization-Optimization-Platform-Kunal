@@ -1,0 +1,392 @@
+
+.t9-page {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    color: var(--text-primary, #172033);
+}
+
+.t9-header,
+.t9-section-heading,
+.t9-pagination,
+.t9-task,
+.t9-doc {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.t9-header h1,
+.t9-header h2 {
+    margin: 0;
+}
+
+.t9-header p {
+    color: #748094;
+    margin: 6px 0 0;
+}
+
+.t9-actions,
+.t9-inline,
+.t9-task-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.t9-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e7ebf1);
+    border-radius: 13px;
+    padding: 18px;
+    box-shadow: 0 3px 14px rgba(25, 40, 70, 0.035);
+}
+
+.t9-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.t9-input,
+.t9-select,
+.t9-textarea {
+    width: 100%;
+    min-width: 150px;
+    padding: 10px 12px;
+    border: 1px solid #dce2eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #172033;
+    font: inherit;
+    outline: none;
+}
+
+.t9-filters .t9-input {
+    flex: 2;
+}
+
+.t9-filters .t9-select {
+    flex: 1;
+}
+
+.t9-input:focus,
+.t9-select:focus,
+.t9-textarea:focus {
+    border-color: #4778dc;
+    box-shadow: 0 0 0 3px rgba(71, 120, 220, 0.1);
+}
+
+.t9-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.t9-btn {
+    border: 1px solid #315fc5;
+    background: #315fc5;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.t9-btn:hover {
+    filter: brightness(0.95);
+}
+
+.t9-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.t9-btn.secondary {
+    color: #34445f;
+    background: #fff;
+    border-color: #dce2eb;
+}
+
+.t9-btn.danger {
+    background: #fff;
+    color: #c03939;
+    border-color: #efcaca;
+}
+
+.t9-muted {
+    color: #7b8798;
+    font-size: 13px;
+}
+
+.t9-error,
+.t9-success {
+    padding: 12px 14px;
+    border-radius: 9px;
+    font-size: 14px;
+}
+
+.t9-error {
+    color: #a12c2c;
+    background: #fff0f0;
+    border: 1px solid #f2d0d0;
+}
+
+.t9-success {
+    color: #176b43;
+    background: #eaf8f0;
+    border: 1px solid #c9ebd7;
+}
+
+.t9-table-wrap {
+    overflow-x: auto;
+}
+
+.t9-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 750px;
+}
+
+.t9-table th,
+.t9-table td {
+    padding: 13px 12px;
+    border-bottom: 1px solid #edf0f4;
+    text-align: left;
+    font-size: 13px;
+}
+
+.t9-table th {
+    color: #68758a;
+    background: #f8f9fc;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.t9-table tbody tr:hover {
+    background: #fafbfe;
+}
+
+.t9-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 20px;
+    background: #edf1f7;
+    color: #526078;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.t9-pill.VALID {
+    color: #177245;
+    background: #e5f6ec;
+}
+
+.t9-pill.DUE_SOON {
+    color: #9b6410;
+    background: #fff3d8;
+}
+
+.t9-pill.EXPIRED {
+    color: #b52e35;
+    background: #ffe8e8;
+}
+
+.t9-pill.NONE {
+    color: #64748b;
+    background: #eef1f5;
+}
+
+.t9-empty {
+    padding: 25px;
+    text-align: center;
+    color: #8993a3;
+}
+
+.t9-pagination {
+    padding-top: 16px;
+}
+
+.t9-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.t9-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.t9-stat span {
+    color: #778397;
+    font-size: 13px;
+}
+
+.t9-stat strong {
+    font-size: 27px;
+    color: #263956;
+}
+
+.t9-task-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.t9-section-heading {
+    border-bottom: 1px solid #edf0f4;
+    padding-bottom: 12px;
+}
+
+.t9-section-heading h2 {
+    font-size: 17px;
+    margin: 0;
+}
+
+.t9-task {
+    align-items: flex-start;
+    padding: 14px 0;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.t9-task:last-child {
+    border-bottom: 0;
+}
+
+.t9-task-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.t9-task-main p {
+    margin: 8px 0;
+    color: #68758a;
+    font-size: 13px;
+}
+
+.t9-task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 13px;
+    color: #68758a;
+    font-size: 12px;
+    margin: 9px 0;
+}
+
+.t9-task-actions {
+    justify-content: flex-end;
+}
+
+.t9-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(15, 25, 42, 0.52);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.t9-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    width: min(650px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 20px 65px rgba(0, 0, 0, 0.2);
+}
+
+.t9-modal h2 {
+    font-size: 19px;
+}
+
+.t9-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.t9-field label {
+    font-size: 13px;
+    color: #56647a;
+    font-weight: 600;
+}
+
+.t9-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.t9-doc-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 15px;
+}
+
+.t9-doc {
+    padding: 12px 0;
+    border-bottom: 1px solid #edf0f4;
+}
+
+@media (max-width: 900px) {
+    .t9-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .t9-task {
+        flex-direction: column;
+    }
+
+    .t9-task-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+    .t9-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .t9-stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .t9-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .t9-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .t9-filters > * {
+        width: 100%;
+    }
+
+    .t9-doc {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .t9-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

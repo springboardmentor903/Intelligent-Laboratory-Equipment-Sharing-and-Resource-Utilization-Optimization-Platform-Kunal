@@ -1,4 +1,3 @@
-
 package com.labresource.platform.booking.service;
 
 import com.labresource.platform.booking.entity.Booking;
@@ -12,6 +11,8 @@ import com.labresource.platform.resource.repository.ResourceRepository;
 import com.labresource.platform.resource.service.LiveStatusEventPublisher;
 import com.labresource.platform.user.entity.User;
 import com.labresource.platform.user.repository.UserRepository;
+import com.labresource.platform.usage.service.UsageChargeService;
+import com.labresource.platform.notification.service.NotificationService;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,8 @@ public class BookingService {
     private final BookingStatusHistoryRepository historyRepository;
     private final UsageLogRepository usageLogRepository;
     private final LiveStatusEventPublisher liveStatusEventPublisher;
+    private final UsageChargeService usageChargeService;
+    private final NotificationService notificationService;
 
     public BookingService(
             BookingRepository bookingRepository,
@@ -39,7 +42,9 @@ public class BookingService {
             UserRepository userRepository,
             BookingStatusHistoryRepository historyRepository,
             UsageLogRepository usageLogRepository,
-            LiveStatusEventPublisher liveStatusEventPublisher) {
+            UsageChargeService usageChargeService,
+            LiveStatusEventPublisher liveStatusEventPublisher,
+            NotificationService notificationService) {
 
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
@@ -47,6 +52,8 @@ public class BookingService {
         this.historyRepository = historyRepository;
         this.usageLogRepository = usageLogRepository;
         this.liveStatusEventPublisher = liveStatusEventPublisher;
+        this.usageChargeService = usageChargeService;
+        this.notificationService = notificationService;
     }
 
     // Create booking
@@ -60,9 +67,13 @@ public class BookingService {
                 .orElseThrow(() ->
                         new IllegalArgumentException("User not found"));
 
-        Resource resource = resourceRepository.findById(resourceId)
+        // Lock the resource row so maintenance status cannot change
+        // concurrently while a new booking is being created.
+        Resource resource = resourceRepository.findByIdForUpdate(resourceId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Resource not found"));
+
+        validateResourceBookable(resource);
 
         LocalDateTime startTime = booking.getStartTime();
         LocalDateTime endTime = booking.getEndTime();
@@ -92,6 +103,7 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
+
         saveStatusHistory(
                 savedBooking,
                 null,
@@ -99,10 +111,32 @@ public class BookingService {
                 email,
                 "Booking created");
 
+
         publishLiveStatusAfterCommit(
                 resource.getId(), "BOOKING_CREATED");
 
         return savedBooking;
+    }
+
+    // A resource is bookable only when active and operational.
+    // BOOKED is allowed because capacity is checked for the requested time slot.
+    private void validateResourceBookable(Resource resource) {
+        if (!isResourceBookable(resource)) {
+            throw new IllegalArgumentException(
+                    "This resource is currently unavailable for booking"
+            );
+        }
+    }
+
+    private boolean isResourceBookable(Resource resource) {
+        if (resource == null || Boolean.FALSE.equals(resource.getIsActive())) {
+            return false;
+        }
+
+        String status = resource.getStatus();
+
+        return "AVAILABLE".equalsIgnoreCase(status)
+                || "BOOKED".equalsIgnoreCase(status);
     }
 
     // Validate booking time
@@ -138,6 +172,10 @@ public class BookingService {
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Resource not found"));
+
+        if (!isResourceBookable(resource)) {
+            return 0;
+        }
 
         if (resource.getQuantity() == null
                 || resource.getQuantity() <= 0) {
@@ -382,6 +420,7 @@ public class BookingService {
         booking.setStatusRemark("Booking checked out by owner");
 
         Booking savedBooking = bookingRepository.save(booking);
+        usageChargeService.createCharge(savedBooking, usageLog);
 
         Integer availableQuantity = resource.getAvailableQuantity();
         Integer totalQuantity = resource.getQuantity();
@@ -466,7 +505,28 @@ public class BookingService {
         booking.setStatus(normalizedStatus);
         booking.setStatusRemark(remark);
 
+        UsageLog completedUsageLog = null;
+
+        if ("COMPLETED".equals(normalizedStatus)) {
+            completedUsageLog = usageLogRepository
+                    .findByBookingIdAndActualEndTimeIsNull(bookingId)
+                    .orElse(null);
+
+            if (completedUsageLog != null) {
+                LocalDateTime completedAt = LocalDateTime.now();
+
+                completedUsageLog.setActualEndTime(completedAt);
+                completedUsageLog.setRemarks("Booking completed by staff");
+
+                usageLogRepository.save(completedUsageLog);
+                booking.setActualEndTime(completedAt);
+            }
+        }
+
         Booking savedBooking = bookingRepository.save(booking);
+        if (completedUsageLog != null) {
+            usageChargeService.createCharge(savedBooking, completedUsageLog);
+        }
 
         saveStatusHistory(
                 savedBooking,
@@ -474,6 +534,22 @@ public class BookingService {
                 normalizedStatus,
                 changedByEmail.trim(),
                 remark);
+
+        if ("APPROVED".equals(normalizedStatus)) {
+            notifyBookingOwner(
+                    savedBooking,
+                    "BOOKING_CONFIRMED",
+                    "Booking confirmed",
+                    "Your booking for " + resourceName(savedBooking)
+                            + " has been confirmed.");
+        } else if ("REJECTED".equals(normalizedStatus)) {
+            notifyBookingOwner(
+                    savedBooking,
+                    "BOOKING_REJECTED",
+                    "Booking rejected",
+                    "Your booking for " + resourceName(savedBooking)
+                            + " has been rejected.");
+        }
 
         publishLiveStatusAfterCommit(
                 savedBooking.getResource().getId(),
@@ -549,6 +625,22 @@ public class BookingService {
                 changedByEmail.trim(),
                 remark);
 
+        if ("APPROVED".equals(normalizedStatus)) {
+            notifyBookingOwner(
+                    savedBooking,
+                    "BOOKING_CONFIRMED",
+                    "Booking confirmed",
+                    "Your booking for " + resourceName(savedBooking)
+                            + " has been confirmed.");
+        } else if ("REJECTED".equals(normalizedStatus)) {
+            notifyBookingOwner(
+                    savedBooking,
+                    "BOOKING_REJECTED",
+                    "Booking rejected",
+                    "Your booking for " + resourceName(savedBooking)
+                            + " has been rejected.");
+        }
+
         publishLiveStatusAfterCommit(
                 savedBooking.getResource().getId(),
                 "STATUS_CHANGED");
@@ -594,6 +686,13 @@ public class BookingService {
                 email,
                 remark);
 
+        notifyBookingOwner(
+                savedBooking,
+                "BOOKING_CANCELLED",
+                "Booking cancelled",
+                "Your booking for " + resourceName(savedBooking)
+                        + " has been cancelled.");
+
         publishLiveStatusAfterCommit(
                 savedBooking.getResource().getId(),
                 "BOOKING_CANCELLED");
@@ -632,6 +731,35 @@ public class BookingService {
     @Transactional(readOnly = true)
     public boolean bookingExists(Long bookingId) {
         return bookingRepository.existsById(bookingId);
+    }
+
+    private void notifyBookingOwner(
+            Booking booking,
+            String type,
+            String title,
+            String message) {
+
+        if (booking.getUser() == null || booking.getUser().getId() == null) {
+            return;
+        }
+
+        notificationService.createNotification(
+                booking.getUser().getId(),
+                title,
+                message,
+                type,
+                "BOOKING",
+                booking.getId()
+        );
+    }
+
+    private String resourceName(Booking booking) {
+        if (booking.getResource() == null
+                || booking.getResource().getName() == null
+                || booking.getResource().getName().isBlank()) {
+            return "the selected equipment";
+        }
+        return booking.getResource().getName();
     }
 
     // Publish live status after transaction commit

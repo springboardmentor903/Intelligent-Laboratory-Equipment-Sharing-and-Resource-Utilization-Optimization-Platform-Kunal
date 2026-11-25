@@ -1,6 +1,7 @@
 
+
 import { useEffect, useState } from 'react'
-import api from '../../api/client'
+import api from '../../api/client.js'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -115,6 +116,9 @@ export default function DocumentPanel({
             return
         }
 
+        // Capture the file input before the first await: React clears currentTarget after the event.
+        const fileInput = event.currentTarget.querySelector('input[type="file"]')
+
         const formData = new FormData()
 
         formData.append('resourceId', String(resourceId))
@@ -132,13 +136,11 @@ export default function DocumentPanel({
 
         try {
             // Let Axios/browser set the multipart boundary automatically.
-            await api.post('/documents/upload', formData)
+            await api.post('/documents/upload', formData, {
+                headers: { 'Content-Type': undefined }
+            })
 
             setFile(null)
-
-            const fileInput = event.currentTarget.querySelector(
-                'input[type="file"]'
-            )
 
             if (fileInput) fileInput.value = ''
 
@@ -162,181 +164,182 @@ export default function DocumentPanel({
         try {
             const response = await api.get(
                 `/documents/${documentId}/view-link`
-            )
+)
 
-            const url = response.data?.url
+const url = response.data?.url
 
-            if (!url) {
-                throw new Error('Secure document URL was not returned.')
-            }
+if (!url) {
+    throw new Error('Secure document URL was not returned.')
+}
 
-            window.open(url, '_blank', 'noopener,noreferrer')
-        } catch (e) {
-            setError(
-                e.response?.data?.message ||
-                e.message ||
-                'Unable to open document.'
-            )
-        }
-    }
-
-    const deleteDocument = async documentId => {
-        const confirmed = window.confirm(
-            'Are you sure you want to delete this document?'
-        )
-
-        if (!confirmed) return
-
-        setError('')
-        setMessage('')
-
-        try {
-            await api.delete(`/documents/${documentId}`)
-
-            setMessage('Document deleted successfully.')
-
-            await loadDocuments()
-        } catch (e) {
-            setError(
-                e.response?.data?.message ||
-                e.response?.data?.error ||
-                'Document deletion failed.'
-            )
-        }
-    }
-
-    return (
-        <section className="t9-card">
-            <div className="t9-header">
-                <div>
-                    <h3>{title}</h3>
-                    <p>Upload and manage equipment documents securely.</p>
-                </div>
-
-                <button
-                    type="button"
-                    className="t9-btn secondary"
-                    onClick={loadDocuments}
-                    disabled={loading}
-                >
-                    Refresh
-                </button>
-            </div>
-
-            {error && (
-                <div className="t9-error">{error}</div>
-            )}
-
-            {message && (
-                <div className="t9-success">{message}</div>
-            )}
-
-            <form
-                className="t9-document-upload"
-                onSubmit={uploadDocument}
-            >
-                <div className="t9-field">
-                    <label>Document Type</label>
-
-                    <select
-                        className="t9-select"
-                        value={documentType}
-                        onChange={e => setDocumentType(e.target.value)}
-                    >
-                        {documentTypes.map(type => (
-                            <option key={type} value={type}>
-                                {type.replaceAll('_', ' ')}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="t9-field">
-                    <label>Select File</label>
-
-                    <input
-                        className="t9-input"
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                        onChange={handleFileChange}
-                    />
-
-                    <span className="t9-muted">
-            PDF, PNG or JPEG · Maximum 10 MB
-          </span>
-                </div>
-
-                {file && (
-                    <div className="t9-muted">
-                        Selected: {file.name} ({formatSize(file.size)})
-                    </div>
-                )}
-
-                <button
-                    className="t9-btn"
-                    type="submit"
-                    disabled={uploading || !file}
-                >
-                    {uploading ? 'Uploading...' : 'Upload Document'}
-                </button>
-            </form>
-
-            <div className="t9-document-list">
-                <div className="t9-section-heading">
-                    <h3>Uploaded Documents</h3>
-                    <span className="t9-pill">{documents.length}</span>
-                </div>
-
-                {loading && (
-                    <div className="t9-empty">
-                        Loading documents...
-                    </div>
-                )}
-
-                {!loading && documents.length === 0 && (
-                    <div className="t9-empty">
-                        No documents uploaded yet.
-                    </div>
-                )}
-
-                {!loading && documents.map(doc => (
-                    <div className="t9-doc" key={doc.id}>
-                        <div className="t9-document-info">
-                            <strong>{doc.originalFileName}</strong>
-
-                            <div className="t9-muted">
-                                {doc.documentType?.replaceAll('_', ' ')}
-                                {' · '}
-                                {formatSize(doc.fileSize)}
-                            </div>
-
-                            <div className="t9-muted">
-                                Uploaded by: {doc.uploadedBy || '—'}
-                                {' · '}
-                                {formatDate(doc.uploadedAt)}
-                            </div>
-                        </div>
-
-                        <div className="t9-inline">
-                            <button
-                                type="button"
-                                className="t9-btn secondary"
-                                onClick={() => viewDocument(doc.id)}
-                            >
-                                View
-                            </button>
-
-                            <button
-                                type="button"
-                                className="t9-btn danger"
-                                onClick={() => deleteDocument(doc.id)}
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </section>
+window.open(url, '_blank', 'noopener,noreferrer')
+} catch (e) {
+    setError(
+        e.response?.data?.message ||
+        e.message ||
+        'Unable to open document.'
     )
 }
+}
+
+const deleteDocument = async documentId => {
+    const confirmed = window.confirm(
+        'Are you sure you want to delete this document?'
+    )
+
+    if (!confirmed) return
+
+    setError('')
+    setMessage('')
+
+    try {
+        await api.delete(`/documents/${documentId}`)
+
+        setMessage('Document deleted successfully.')
+
+        await loadDocuments()
+    } catch (e) {
+        setError(
+            e.response?.data?.message ||
+            e.response?.data?.error ||
+            'Document deletion failed.'
+        )
+    }
+}
+
+return (
+    <section className="t9-card">
+        <div className="t9-header">
+            <div>
+                <h3>{title}</h3>
+                <p>Upload and manage equipment documents securely.</p>
+            </div>
+
+            <button
+                type="button"
+                className="t9-btn secondary"
+                onClick={loadDocuments}
+                disabled={loading}
+            >
+                Refresh
+            </button>
+        </div>
+
+        {error && (
+            <div className="t9-error">{error}</div>
+        )}
+
+        {message && (
+            <div className="t9-success">{message}</div>
+        )}
+
+        <form
+            className="t9-document-upload"
+            onSubmit={uploadDocument}
+        >
+            <div className="t9-field">
+                <label>Document Type</label>
+
+                <select
+                    className="t9-select"
+                    value={documentType}
+                    onChange={e => setDocumentType(e.target.value)}
+                >
+                    {documentTypes.map(type => (
+                        <option key={type} value={type}>
+                            {type.replaceAll('_', ' ')}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div className="t9-field">
+                <label>Select File</label>
+
+                <input
+                    className="t9-input"
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                    onChange={handleFileChange}
+                />
+
+                <span className="t9-muted">
+            PDF, PNG or JPEG · Maximum 10 MB
+          </span>
+            </div>
+
+            {file && (
+                <div className="t9-muted">
+                    Selected: {file.name} ({formatSize(file.size)})
+                </div>
+            )}
+
+            <button
+                className="t9-btn"
+                type="submit"
+                disabled={uploading || !file}
+            >
+                {uploading ? 'Uploading...' : 'Upload Document'}
+            </button>
+        </form>
+
+        <div className="t9-document-list">
+            <div className="t9-section-heading">
+                <h3>Uploaded Documents</h3>
+                <span className="t9-pill">{documents.length}</span>
+            </div>
+
+            {loading && (
+                <div className="t9-empty">
+                    Loading documents...
+                </div>
+            )}
+
+            {!loading && documents.length === 0 && (
+                <div className="t9-empty">
+                    No documents uploaded yet.
+                </div>
+            )}
+
+            {!loading && documents.map(doc => (
+                <div className="t9-doc" key={doc.id}>
+                    <div className="t9-document-info">
+                        <strong>{doc.originalFileName}</strong>
+
+                        <div className="t9-muted">
+                            {doc.documentType?.replaceAll('_', ' ')}
+                            {' · '}
+                            {formatSize(doc.fileSize)}
+                        </div>
+
+                        <div className="t9-muted">
+                            Uploaded by: {doc.uploadedBy || '—'}
+                            {' · '}
+                            {formatDate(doc.uploadedAt)}
+                        </div>
+                    </div>
+
+                    <div className="t9-inline">
+                        <button
+                            type="button"
+                            className="t9-btn secondary"
+                            onClick={() => viewDocument(doc.id)}
+                        >
+                            View
+                        </button>
+
+                        <button
+                            type="button"
+                            className="t9-btn danger"
+                            onClick={() => deleteDocument(doc.id)}
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </section>
+)
+}
+

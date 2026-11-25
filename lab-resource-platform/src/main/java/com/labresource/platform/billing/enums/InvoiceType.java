@@ -1,4 +1,7 @@
+
 package com.labresource.platform.billing.enums;
 
-public class InvoiceType {
+public enum InvoiceType {
+    EXTERNAL,
+    DEPARTMENT_CHARGEBACK
 }

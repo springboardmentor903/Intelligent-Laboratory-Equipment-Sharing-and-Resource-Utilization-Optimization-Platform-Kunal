@@ -2,8 +2,10 @@
 package com.labresource.platform.institution.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "institutions")
@@ -47,6 +49,15 @@ public class Institution {
             nullable = false, precision = 5, scale = 2)
     private BigDecimal utilizationTargetPercent;
 
+    @Column(name = "opening_time")
+    private LocalTime openingTime;
+
+    @Column(name = "closing_time")
+    private LocalTime closingTime;
+
+    @Column(name = "working_days", length = 100)
+    private String workingDays;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -64,9 +75,11 @@ public class Institution {
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
+
         if (isActive == null) {
             isActive = true;
         }
+
         if (utilizationTargetPercent == null) {
             utilizationTargetPercent = new BigDecimal("80.00");
         }
@@ -77,45 +90,140 @@ public class Institution {
         updatedAt = Instant.now();
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public String getName() {
+        return name;
+    }
 
-    public String getInstitutionType() { return institutionType; }
-    public void setInstitutionType(String institutionType) { this.institutionType = institutionType; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getAddressLine() { return addressLine; }
-    public void setAddressLine(String addressLine) { this.addressLine = addressLine; }
+    public String getCode() {
+        return code;
+    }
 
-    public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-    public String getState() { return state; }
-    public void setState(String state) { this.state = state; }
+    public String getInstitutionType() {
+        return institutionType;
+    }
 
-    public String getCountry() { return country; }
-    public void setCountry(String country) { this.country = country; }
+    public void setInstitutionType(String institutionType) {
+        this.institutionType = institutionType;
+    }
 
-    public String getContactEmail() { return contactEmail; }
-    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+    public String getAddressLine() {
+        return addressLine;
+    }
 
-    public String getContactPhone() { return contactPhone; }
-    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+    public void setAddressLine(String addressLine) {
+        this.addressLine = addressLine;
+    }
 
-    public String getWebsite() { return website; }
-    public void setWebsite(String website) { this.website = website; }
+    public String getCity() {
+        return city;
+    }
 
-    public BigDecimal getUtilizationTargetPercent() { return utilizationTargetPercent; }
-    public void setUtilizationTargetPercent(BigDecimal utilizationTargetPercent) { this.utilizationTargetPercent = utilizationTargetPercent; }
+    public void setCity(String city) {
+        this.city = city;
+    }
 
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean active) { isActive = active; }
+    public String getState() {
+        return state;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public BigDecimal getUtilizationTargetPercent() {
+        return utilizationTargetPercent;
+    }
+
+    public void setUtilizationTargetPercent(
+            BigDecimal utilizationTargetPercent) {
+        this.utilizationTargetPercent = utilizationTargetPercent;
+    }
+
+    public LocalTime getOpeningTime() {
+        return openingTime;
+    }
+
+    public void setOpeningTime(LocalTime openingTime) {
+        this.openingTime = openingTime;
+    }
+
+    public LocalTime getClosingTime() {
+        return closingTime;
+    }
+
+    public void setClosingTime(LocalTime closingTime) {
+        this.closingTime = closingTime;
+    }
+
+    public String getWorkingDays() {
+        return workingDays;
+    }
+
+    public void setWorkingDays(String workingDays) {
+        this.workingDays = workingDays;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean active) {
+        isActive = active;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
 }

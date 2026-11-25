@@ -19,8 +19,11 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -29,10 +32,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
+    private static final Pattern NOTIFICATION_TOPIC =
+            Pattern.compile("^/topic/notifications/(\\d+)$");
+
     public WebSocketConfig(
             JwtService jwtService,
-            UserRepository userRepository
-    ) {
+            UserRepository userRepository) {
+
         this.jwtService = jwtService;
         this.userRepository = userRepository;
     }
@@ -50,19 +56,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
+    public void configureClientInboundChannel(
+            ChannelRegistration registration) {
+
         registration.interceptors(new ChannelInterceptor() {
 
             @Override
             public Message<?> preSend(
                     Message<?> message,
-                    MessageChannel channel
-            ) {
+                    MessageChannel channel) {
+
                 StompHeaderAccessor accessor =
                         MessageHeaderAccessor.getAccessor(
                                 message,
-                                StompHeaderAccessor.class
-                        );
+                                StompHeaderAccessor.class);
 
                 if (accessor == null) {
                     return message;
@@ -72,39 +79,32 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
                 if (StompCommand.CONNECT.equals(command)) {
 
-                    String authorization = accessor.getFirstNativeHeader(
-                            "Authorization"
-                    );
+                    String authorization =
+                            accessor.getFirstNativeHeader("Authorization");
 
                     if (authorization == null
                             || !authorization.startsWith("Bearer ")) {
                         throw new IllegalArgumentException(
-                                "WebSocket JWT token is required"
-                        );
+                                "WebSocket JWT token is required");
                     }
 
                     String token = authorization.substring(7).trim();
-
                     String email = jwtService.extractEmail(token);
 
                     User user = userRepository.findByEmailWithRole(email)
                             .orElseThrow(() ->
                                     new IllegalArgumentException(
-                                            "WebSocket user not found"
-                                    )
-                            );
+                                            "WebSocket user not found"));
 
                     if (!Boolean.TRUE.equals(user.getIsActive())) {
                         throw new IllegalArgumentException(
-                                "WebSocket user is inactive"
-                        );
+                                "WebSocket user is inactive");
                     }
 
                     if (user.getRole() == null
                             || user.getRole().getName() == null) {
                         throw new IllegalArgumentException(
-                                "WebSocket user role is missing"
-                        );
+                                "WebSocket user role is missing");
                     }
 
                     String roleName = user.getRole().getName()
@@ -119,23 +119,50 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             new UsernamePasswordAuthenticationToken(
                                     email,
                                     null,
-                                    List.of(
-                                            new SimpleGrantedAuthority(
-                                                    "ROLE_" + roleName
-                                            )
-                                    )
-                            );
+                                    List.of(new SimpleGrantedAuthority(
+                                            "ROLE_" + roleName)));
 
                     accessor.setUser(authentication);
+                }
 
-                } else if (
-                        (StompCommand.SEND.equals(command)
-                                || StompCommand.SUBSCRIBE.equals(command))
-                                && accessor.getUser() == null
-                ) {
+                if (StompCommand.SUBSCRIBE.equals(command)) {
+
+                    Principal principal = accessor.getUser();
+
+                    if (principal == null) {
+                        throw new IllegalArgumentException(
+                                "Unauthenticated WebSocket subscription");
+                    }
+
+                    String destination = accessor.getDestination();
+
+                    if (destination != null) {
+                        Matcher matcher =
+                                NOTIFICATION_TOPIC.matcher(destination);
+
+                        if (matcher.matches()) {
+
+                            User user = userRepository
+                                    .findByEmailWithRole(principal.getName())
+                                    .orElseThrow(() ->
+                                            new IllegalArgumentException(
+                                                    "WebSocket user not found"));
+
+                            Long requestedUserId =
+                                    Long.valueOf(matcher.group(1));
+
+                            if (!user.getId().equals(requestedUserId)) {
+                                throw new IllegalArgumentException(
+                                        "You cannot subscribe to another user's notifications");
+                            }
+                        }
+                    }
+                }
+
+                if (StompCommand.SEND.equals(command)
+                        && accessor.getUser() == null) {
                     throw new IllegalArgumentException(
-                            "Unauthenticated WebSocket connection"
-                    );
+                            "Unauthenticated WebSocket message");
                 }
 
                 return message;

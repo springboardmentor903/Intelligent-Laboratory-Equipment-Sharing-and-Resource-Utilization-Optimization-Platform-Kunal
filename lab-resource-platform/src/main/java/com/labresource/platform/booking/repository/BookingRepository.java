@@ -2,14 +2,11 @@
 package com.labresource.platform.booking.repository;
 
 import com.labresource.platform.booking.entity.Booking;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Lock;
-
 import jakarta.persistence.LockModeType;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +19,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByResourceId(Long resourceId);
 
-    // Count overlapping bookings for capacity validation
     @Query("""
         SELECT COUNT(b) FROM Booking b
         WHERE b.resource.id = :resourceId
@@ -36,7 +32,24 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("endTime") LocalDateTime endTime
     );
 
-    // Fetch all bookings with user and resource details
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT b FROM Booking b
+        JOIN FETCH b.user
+        JOIN FETCH b.resource
+        WHERE b.resource.id = :resourceId
+          AND b.status IN :statuses
+          AND b.startTime < :maintenanceEnd
+          AND b.endTime > :maintenanceStart
+        ORDER BY b.startTime ASC
+    """)
+    List<Booking> findOverlappingBookingsForMaintenance(
+            @Param("resourceId") Long resourceId,
+            @Param("statuses") List<String> statuses,
+            @Param("maintenanceStart") LocalDateTime maintenanceStart,
+            @Param("maintenanceEnd") LocalDateTime maintenanceEnd
+    );
+
     @Query("""
         SELECT b FROM Booking b
         JOIN FETCH b.user
@@ -44,7 +57,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     """)
     List<Booking> findAllWithDetails();
 
-    // Institution Admin: fetch only own institution bookings
     @Query("""
         SELECT b FROM Booking b
         JOIN FETCH b.user
@@ -56,7 +68,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("institutionId") Long institutionId
     );
 
-    // Fetch bookings for a particular user
     @Query("""
         SELECT b FROM Booking b
         JOIN FETCH b.user
@@ -67,7 +78,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("userId") Long userId
     );
 
-    // Fetch bookings by status
     @Query("""
         SELECT b FROM Booking b
         JOIN FETCH b.user
@@ -78,7 +88,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("status") String status
     );
 
-    // Lock booking while updating its status
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT b FROM Booking b
@@ -90,7 +99,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("bookingId") Long bookingId
     );
 
-    // Fetch booking details
     @Query("""
         SELECT b FROM Booking b
         JOIN FETCH b.user
@@ -101,7 +109,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("bookingId") Long bookingId
     );
 
-    // Fetch all bookings currently in use
     @Query("""
         SELECT b FROM Booking b
         JOIN FETCH b.resource
@@ -116,7 +123,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             LocalDateTime now
     );
 
-    // Resource utilization report
     @Query(value = """
         SELECT
             r.id,
@@ -161,5 +167,140 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("endDateTime") LocalDateTime endDateTime,
             @Param("scopeType") String scopeType,
             @Param("scopeId") Long scopeId
+    );
+
+    @Query("""
+        SELECT b FROM Booking b
+        JOIN FETCH b.resource
+        WHERE b.user.id = :userId
+          AND b.startTime >= :now
+          AND b.status IN ('PENDING', 'APPROVED', 'IN_USE')
+        ORDER BY b.startTime ASC
+    """)
+    List<Booking> findUpcomingDashboardBookings(
+            @Param("userId") Long userId,
+            @Param("now") LocalDateTime now,
+            org.springframework.data.domain.Pageable pageable
+    );
+
+    @Query("""
+        SELECT b.status, COUNT(b)
+        FROM Booking b
+        WHERE b.user.id = :userId
+          AND b.createdAt >= :fromDate
+        GROUP BY b.status
+    """)
+    List<Object[]> countUserBookingsByStatusSince(
+            @Param("userId") Long userId,
+            @Param("fromDate") LocalDateTime fromDate
+    );
+
+    @Query("""
+        SELECT COUNT(b)
+        FROM Booking b
+        WHERE b.user.id = :userId
+          AND b.status = 'NO_SHOW'
+          AND b.createdAt >= :fromDate
+    """)
+    long countUserNoShowsSince(
+            @Param("userId") Long userId,
+            @Param("fromDate") LocalDateTime fromDate
+    );
+
+    @Query("""
+        SELECT b.resource.category, COUNT(b)
+        FROM Booking b
+        WHERE b.user.id = :userId
+          AND b.createdAt >= :fromDate
+        GROUP BY b.resource.category
+        ORDER BY COUNT(b) DESC
+    """)
+    List<Object[]> findUserTopBookedCategories(
+            @Param("userId") Long userId,
+            @Param("fromDate") LocalDateTime fromDate
+    );
+
+    @Query("""
+        SELECT b.resource.id, COUNT(b)
+        FROM Booking b
+        WHERE b.resource.institution.id = :institutionId
+          AND b.createdAt >= :fromDate
+        GROUP BY b.resource.id
+        ORDER BY COUNT(b) DESC
+    """)
+    List<Object[]> findInstitutionPopularResources(
+            @Param("institutionId") Long institutionId,
+            @Param("fromDate") LocalDateTime fromDate
+    );
+
+    @Query("""
+        SELECT DISTINCT b.resource.id
+        FROM Booking b
+        WHERE b.user.id = :userId
+    """)
+    List<Long> findPreviouslyBookedResourceIds(
+            @Param("userId") Long userId
+    );
+
+    @Query("""
+        SELECT COUNT(b)
+        FROM Booking b
+        WHERE b.resource.institution.id = :institutionId
+          AND b.createdAt >= :fromDate
+          AND b.createdAt < :toDate
+          AND (:departmentId IS NULL OR b.resource.department.id = :departmentId)
+    """)
+    long countDashboardBookings(
+            @Param("institutionId") Long institutionId,
+            @Param("departmentId") Long departmentId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
+    );
+
+    @Query("""
+        SELECT COUNT(b)
+        FROM Booking b
+        WHERE b.resource.institution.id = :institutionId
+          AND b.status = 'NO_SHOW'
+          AND b.createdAt >= :fromDate
+          AND b.createdAt < :toDate
+          AND (:departmentId IS NULL OR b.resource.department.id = :departmentId)
+    """)
+    long countDashboardNoShows(
+            @Param("institutionId") Long institutionId,
+            @Param("departmentId") Long departmentId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
+    );
+
+    @Query("""
+        SELECT b.status, COUNT(b)
+        FROM Booking b
+        WHERE b.resource.institution.id = :institutionId
+          AND b.createdAt >= :fromDate
+          AND b.createdAt < :toDate
+          AND (:departmentId IS NULL OR b.resource.department.id = :departmentId)
+        GROUP BY b.status
+    """)
+    List<Object[]> countDashboardBookingsByStatus(
+            @Param("institutionId") Long institutionId,
+            @Param("departmentId") Long departmentId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate
+    );
+
+    @Query("""
+        SELECT b FROM Booking b
+        JOIN FETCH b.user
+        JOIN FETCH b.resource
+        WHERE b.resource.institution.id = :institutionId
+          AND b.status = 'PENDING'
+          AND (:departmentId IS NULL OR b.resource.department.id = :departmentId)
+        ORDER BY b.createdAt ASC
+    """)
+    List<Booking> findDashboardPendingApprovals(
+            @Param("institutionId") Long institutionId,
+            @Param("departmentId") Long departmentId,
+            org.springframework.data.domain.Pageable pageable
     );
 }

@@ -14,6 +14,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import api from '../api/client';
+import BookingMaintenanceDetails from '../components/BookingMaintenanceDetails';
 import { useAuth } from '../context/AuthContext';
 import WaitlistRecurringPanel from './WaitlistRecurringPanel';
 
@@ -76,6 +77,7 @@ export default function Bookings() {
   const [actionId, setActionId] = useState(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [historyBooking, setHistoryBooking] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -119,9 +121,21 @@ export default function Bookings() {
                   0
               );
 
+              const isActive = resource.isActive !== false;
+
+              // Maintenance or unavailable equipment must never appear
+              // in the new booking dropdown.
+              if (
+                  !isActive ||
+                  ['UNDER_MAINTENANCE', 'OUT_OF_SERVICE', 'RETIRED', 'INACTIVE']
+                      .includes(status)
+              ) {
+                return false;
+              }
+
               return (
                   ['AVAILABLE', 'ACTIVE'].includes(status) ||
-                  quantity > 0
+                  (!status && quantity > 0)
               );
             })
         );
@@ -808,9 +822,26 @@ export default function Bookings() {
                         </td>
 
                         <td>
-                          {canReview
-                              ? renderActions(booking)
-                              : renderStudentSessionActions(booking)}
+                          <div className="booking-actions">
+                            {canReview
+                                ? renderActions(booking)
+                                : renderStudentSessionActions(booking)}
+
+                            <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => setHistoryBooking(booking)}
+                            >
+                              <Clock3 size={15} />
+                              History
+                            </button>
+                          </div>
+
+                          {booking.statusRemark && (
+                              <small className="field-hint" style={{ display: 'block', marginTop: 5 }}>
+                                Reason: {booking.statusRemark}
+                              </small>
+                          )}
                         </td>
                       </tr>
                   ))}
@@ -836,6 +867,12 @@ export default function Bookings() {
           )}
         </section>
         <WaitlistRecurringPanel />
+        {historyBooking && (
+            <BookingMaintenanceDetails
+                booking={historyBooking}
+                onClose={() => setHistoryBooking(null)}
+            />
+        )}
       </div>
   );
 }

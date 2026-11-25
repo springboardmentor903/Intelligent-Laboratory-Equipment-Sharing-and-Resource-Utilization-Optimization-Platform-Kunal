@@ -209,4 +209,25 @@ public class Resource {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+    @Column(name = "purchase_date")
+    private java.time.LocalDate purchaseDate;
+
+    @Column(name = "purchase_cost", precision = 14, scale = 2)
+    private java.math.BigDecimal purchaseCost;
+
+    public java.time.LocalDate getPurchaseDate() {
+        return purchaseDate;
+    }
+
+    public void setPurchaseDate(java.time.LocalDate purchaseDate) {
+        this.purchaseDate = purchaseDate;
+    }
+
+    public java.math.BigDecimal getPurchaseCost() {
+        return purchaseCost;
+    }
+
+    public void setPurchaseCost(java.math.BigDecimal purchaseCost) {
+        this.purchaseCost = purchaseCost;
+    }
 }

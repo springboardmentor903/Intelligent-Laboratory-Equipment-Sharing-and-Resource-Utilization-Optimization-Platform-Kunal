@@ -1,4 +1,13 @@
+
 package com.labresource.platform.report.registry;
 
-public class ReportDefinition {
+import java.util.List;
+
+public record ReportDefinition(
+        String type,
+        String title,
+        String description,
+        List<String> allowedRoles,
+        boolean exportSupported
+) {
 }

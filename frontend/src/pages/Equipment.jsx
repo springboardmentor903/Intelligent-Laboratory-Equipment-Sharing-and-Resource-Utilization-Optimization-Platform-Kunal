@@ -12,6 +12,8 @@ import {
   RotateCcw,
   X,
   Save,
+  AlertTriangle,
+  Wrench,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -46,7 +48,9 @@ function getItems(data) {
 
 export default function Equipment() {
   const { user } = useAuth();
-  const canManage = ['LAB_MANAGER', 'SYSTEM_ADMIN'].includes(getRole(user));
+  const role = getRole(user);
+  const canManage = ['LAB_MANAGER', 'SYSTEM_ADMIN'].includes(role);
+  const canReportProblem = ['RESEARCHER_STUDENT', 'DEPARTMENT_HEAD', 'LAB_TECHNICIAN'].includes(role);
 
   const [items, setItems] = useState([]);
   const [inactiveItems, setInactiveItems] = useState([]);
@@ -473,6 +477,28 @@ export default function Equipment() {
                         <h3>{item.name || 'Unnamed equipment'}</h3>
                         <p>{item.description || 'No equipment description provided.'}</p>
 
+                        {s === 'UNDER_MAINTENANCE' && (
+                            <div
+                                role="status"
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
+                                  gap: 9,
+                                  padding: '11px 12px',
+                                  margin: '12px 0',
+                                  border: '1px solid #fed7aa',
+                                  borderRadius: 9,
+                                  background: '#fff7ed',
+                                  color: '#9a3412',
+                                  fontSize: 13,
+                                  lineHeight: 1.5,
+                                }}
+                            >
+                              <AlertTriangle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
+                              <span><strong>Under Maintenance</strong><br />This equipment is currently unavailable while maintenance work is in progress.</span>
+                            </div>
+                        )}
+
                         <div className="equipment-meta">
                           <span>Location</span>
                           <strong>{item.location || 'Not specified'}</strong>
@@ -483,9 +509,29 @@ export default function Equipment() {
                           <strong>{qty} / {item.quantity ?? '—'}</strong>
                         </div>
 
-                        <a className="card-action" href="/bookings">
-                          View booking options <ArrowUpRight size={15} />
-                        </a>
+                        {s === 'UNDER_MAINTENANCE' ? (
+                            <span
+                                className="card-action"
+                                aria-disabled="true"
+                                style={{ opacity: 0.55, cursor: 'not-allowed' }}
+                            >
+                              Booking unavailable during maintenance
+                            </span>
+                        ) : (
+                            <a className="card-action" href="/bookings">
+                              View booking options <ArrowUpRight size={15} />
+                            </a>
+                        )}
+
+                        {canReportProblem && (
+                            <a
+                                className="card-action"
+                                href={`/maintenance-requests?resourceId=${encodeURIComponent(item.id)}`}
+                                style={{ marginTop: 8 }}
+                            >
+                              <Wrench size={15} /> Report a Problem
+                            </a>
+                        )}
 
                         {canManage && (
                             <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>

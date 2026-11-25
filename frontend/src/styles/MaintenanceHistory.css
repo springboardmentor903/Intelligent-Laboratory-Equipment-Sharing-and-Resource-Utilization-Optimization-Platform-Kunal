@@ -1,0 +1,670 @@
+
+/* =========================================
+   MAINTENANCE HISTORY - MAIN LAYOUT
+========================================= */
+
+.m3-maintenancehistory-001 {
+    min-width: 0;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.m3-maintenancehistory-002 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.m3-maintenancehistory-003 {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.m3-maintenancehistory-004 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 25px;
+    font-weight: 750;
+    line-height: 1.3;
+}
+
+.m3-maintenancehistory-005 {
+    margin: 5px 0 0;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+/* =========================================
+   ACCESS RESTRICTED
+========================================= */
+
+.m3-maintenancehistory-006 {
+    max-width: 650px;
+    margin: 50px auto;
+    padding: 28px;
+    background: #fff;
+    border: 1px solid #fecaca;
+    border-radius: 14px;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05);
+}
+
+.m3-maintenancehistory-007 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #dc2626;
+}
+
+.m3-maintenancehistory-008 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.m3-maintenancehistory-009 {
+    margin: 14px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* =========================================
+   PAGE HEADER
+========================================= */
+
+.m3-maintenancehistory-010 {
+    width: 100%;
+    min-width: 0;
+    padding: 26px;
+    color: #0f172a;
+    background: #f8fafc;
+}
+
+.m3-maintenancehistory-011 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.m3-maintenancehistory-012 {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.m3-maintenancehistory-013 {
+    display: flex;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+    background: #dbeafe;
+    border-radius: 12px;
+}
+
+.m3-maintenancehistory-014 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(21px, 3vw, 28px);
+    font-weight: 750;
+    line-height: 1.3;
+}
+
+.m3-maintenancehistory-015 {
+    margin: 10px 0 0 59px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.m3-maintenancehistory-016 {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 9px 16px;
+    color: #ffffff;
+    background: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.m3-maintenancehistory-016:hover:not(:disabled) {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.m3-maintenancehistory-016:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* =========================================
+   ERROR MESSAGES
+========================================= */
+
+.m3-maintenancehistory-017 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* =========================================
+   COMMON SECTION CARD
+========================================= */
+
+.m3-maintenancehistory-018 {
+    min-width: 0;
+    margin-bottom: 22px;
+    padding: 22px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+}
+
+.m3-maintenancehistory-019 {
+    margin-bottom: 18px;
+}
+
+.m3-maintenancehistory-020 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.m3-maintenancehistory-021 {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* =========================================
+   DATE FILTER
+========================================= */
+
+.m3-maintenancehistory-022 {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 13px;
+}
+
+.m3-maintenancehistory-022 > div {
+    display: flex;
+    min-width: 190px;
+    flex: 1 1 190px;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.m3-maintenancehistory-023 {
+    color: #475569;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.m3-maintenancehistory-024 {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 11px;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.m3-maintenancehistory-024:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.m3-maintenancehistory-025,
+.m3-maintenancehistory-026 {
+    min-height: 42px;
+    padding: 9px 17px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.m3-maintenancehistory-025 {
+    color: #ffffff;
+    background: #2563eb;
+    border: 1px solid #2563eb;
+}
+
+.m3-maintenancehistory-025:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.m3-maintenancehistory-025:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.m3-maintenancehistory-026 {
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+}
+
+.m3-maintenancehistory-026:hover {
+    background: #e2e8f0;
+}
+
+/* =========================================
+   LOADING
+========================================= */
+
+.m3-maintenancehistory-027 {
+    display: flex;
+    min-height: 220px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 13px;
+    color: #64748b;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+}
+
+.m3-maintenancehistory-028 {
+    color: #2563eb;
+    animation: maintenance-history-spin 1s linear infinite;
+}
+
+.m3-maintenancehistory-029 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 550;
+}
+
+@keyframes maintenance-history-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================
+   STATISTICS GRID
+========================================= */
+
+.m3-maintenancehistory-030 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.m3-maintenancehistory-049 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+/* =========================================
+   TABLE SECTION HEADINGS
+========================================= */
+
+.m3-maintenancehistory-031 {
+    margin-bottom: 18px;
+}
+
+.m3-maintenancehistory-032,
+.m3-maintenancehistory-047 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.m3-maintenancehistory-047 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.m3-maintenancehistory-048 {
+    color: #2563eb;
+}
+
+/* =========================================
+   TABLES
+========================================= */
+
+.m3-maintenancehistory-033 {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.m3-maintenancehistory-034,
+.m3-maintenancehistory-052 {
+    width: 100%;
+    min-width: 1050px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.m3-maintenancehistory-052 {
+    min-width: 750px;
+}
+
+.m3-maintenancehistory-035 {
+    background: #f1f5f9;
+}
+
+.m3-maintenancehistory-036 {
+    padding: 13px 14px;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.m3-maintenancehistory-037 {
+    background: #ffffff;
+}
+
+.m3-maintenancehistory-038 {
+    transition: background 0.15s ease;
+}
+
+.m3-maintenancehistory-038:hover {
+    background: #f8fafc;
+}
+
+.m3-maintenancehistory-039 {
+    padding: 13px 14px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.m3-maintenancehistory-040 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.m3-maintenancehistory-041 {
+    margin: 0;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.m3-maintenancehistory-042 {
+    padding: 13px 14px;
+    color: #475569;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.m3-maintenancehistory-043 {
+    padding: 13px 14px;
+    color: #475569;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.m3-maintenancehistory-044 {
+    padding: 13px 14px;
+    color: #047857;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.m3-maintenancehistory-045 {
+    padding: 13px 14px;
+    color: #b45309;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.m3-maintenancehistory-046 {
+    padding: 13px 14px;
+    color: #047857;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.m3-maintenancehistory-053 {
+    padding: 13px 14px;
+    color: #0f172a;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+/* =========================================
+   ERROR BANNER
+========================================= */
+
+.m3-maintenancehistory-054 {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    color: #991b1b;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.m3-maintenancehistory-055 {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    color: #dc2626;
+}
+
+/* =========================================
+   EMPTY STATE
+========================================= */
+
+.m3-maintenancehistory-056 {
+    display: flex;
+    min-height: 180px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px 18px;
+    text-align: center;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+}
+
+.m3-maintenancehistory-057 {
+    display: flex;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    color: #64748b;
+    background: #e2e8f0;
+    border-radius: 50%;
+}
+
+.m3-maintenancehistory-058 {
+    max-width: 420px;
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* =========================================
+   COLOR TONES
+========================================= */
+
+.m3-tone-blue {
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+.m3-tone-green {
+    color: #059669;
+    background: #d1fae5;
+}
+
+.m3-tone-amber {
+    color: #d97706;
+    background: #fef3c7;
+}
+
+.m3-tone-purple {
+    color: #7c3aed;
+    background: #ede9fe;
+}
+
+/* =========================================
+   STATUS BADGES
+========================================= */
+
+.m3-maintenancehistory-010 .bg-green-100 {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.m3-maintenancehistory-010 .bg-gray-100 {
+    color: #475569;
+    background: #f1f5f9;
+}
+
+.m3-maintenancehistory-010 .bg-blue-100 {
+    color: #1d4ed8;
+    background: #dbeafe;
+}
+
+.m3-maintenancehistory-010 .bg-amber-100 {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.m3-maintenancehistory-010 .bg-indigo-100 {
+    color: #4338ca;
+    background: #e0e7ff;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
+
+@media (max-width: 1100px) {
+    .m3-maintenancehistory-030 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .m3-maintenancehistory-049 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .m3-maintenancehistory-010 {
+        padding: 16px;
+    }
+
+    .m3-maintenancehistory-011 {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .m3-maintenancehistory-015 {
+        margin-left: 0;
+    }
+
+    .m3-maintenancehistory-016 {
+        width: 100%;
+    }
+
+    .m3-maintenancehistory-018 {
+        padding: 16px;
+    }
+
+    .m3-maintenancehistory-030,
+    .m3-maintenancehistory-049 {
+        grid-template-columns: 1fr;
+    }
+
+    .m3-maintenancehistory-022 {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .m3-maintenancehistory-022 > div {
+        min-width: 100%;
+    }
+
+    .m3-maintenancehistory-025,
+    .m3-maintenancehistory-026 {
+        width: 100%;
+    }
+
+    .m3-maintenancehistory-014 {
+        font-size: 21px;
+    }
+}
+
+@media (max-width: 420px) {
+    .m3-maintenancehistory-010 {
+        padding: 12px;
+    }
+
+    .m3-maintenancehistory-018 {
+        padding: 13px;
+    }
+
+    .m3-maintenancehistory-001 {
+        padding: 15px;
+    }
+
+    .m3-maintenancehistory-004 {
+        font-size: 22px;
+    }
+}

@@ -5,31 +5,48 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notifications")
+@Table(
+        name = "notifications",
+        indexes = {
+                @Index(name = "idx_notification_user_created",
+                        columnList = "user_id, created_at"),
+                @Index(name = "idx_notification_user_read",
+                        columnList = "user_id, is_read"),
+                @Index(name = "idx_notification_reference",
+                        columnList = "reference_type, reference_id")
+        }
+)
 public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Column(nullable = false, length = 100)
     private String title;
 
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false, length = 2000)
     private String message;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 50)
     private String type = "GENERAL";
 
-    @Column(nullable = false)
+    @Column(name = "reference_type", length = 60)
+    private String referenceType;
+
+    @Column(name = "reference_id")
+    private Long referenceId;
+
+    @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "read_at")
     private LocalDateTime readAt;
 
     @PrePersist
@@ -79,6 +96,22 @@ public class Notification {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public Long getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(Long referenceId) {
+        this.referenceId = referenceId;
     }
 
     public Boolean getIsRead() {

@@ -1,0 +1,704 @@
+
+/* =========================================
+   MAINTENANCE OVERVIEW
+   ========================================= */
+
+/* Common card */
+
+.m3-maintenanceoverview-001 {
+    min-width: 0;
+    padding: 22px;
+    margin-bottom: 22px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+    box-sizing: border-box;
+}
+
+/* Statistic card */
+
+.m3-maintenanceoverview-002 {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.m3-maintenanceoverview-003 {
+    margin: 0;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.m3-maintenanceoverview-004 {
+    margin: 12px 0 7px;
+    color: #111827;
+    font-size: 24px;
+    font-weight: 750;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.m3-maintenanceoverview-005 {
+    margin: 0;
+    color: #9ca3af;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Statistic icon colors */
+
+.m3-tone-blue,
+.m3-tone-green,
+.m3-tone-amber,
+.m3-tone-purple,
+.m3-tone-red {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.m3-tone-blue {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.m3-tone-green {
+    color: #15803d;
+    background: #dcfce7;
+}
+
+.m3-tone-amber {
+    color: #b45309;
+    background: #fef3c7;
+}
+
+.m3-tone-purple {
+    color: #7e22ce;
+    background: #f3e8ff;
+}
+
+.m3-tone-red {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* Error banner */
+
+.m3-maintenanceoverview-006 {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 13px 15px;
+    margin-bottom: 18px;
+    color: #991b1b;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.m3-maintenanceoverview-007 {
+    flex-shrink: 0;
+}
+
+/* Empty state */
+
+.m3-maintenanceoverview-008 {
+    min-height: 230px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    text-align: center;
+}
+
+.m3-maintenanceoverview-009 {
+    width: 58px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    color: #2563eb;
+    background: #eff6ff;
+    border-radius: 16px;
+}
+
+.m3-maintenanceoverview-010 {
+    margin: 0;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.m3-maintenanceoverview-011 {
+    max-width: 420px;
+    margin: 9px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* Access restricted */
+
+.m3-maintenanceoverview-012 {
+    max-width: 650px;
+    margin: 50px auto;
+    padding: 28px;
+    color: #1f2937;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 15px;
+}
+
+.m3-maintenanceoverview-013 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #dc2626;
+}
+
+.m3-maintenanceoverview-014 {
+    margin: 0;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.m3-maintenanceoverview-015 {
+    margin: 12px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Main page */
+
+.m3-maintenanceoverview-016 {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 28px;
+    color: #1f2937;
+    box-sizing: border-box;
+}
+
+.m3-maintenanceoverview-017 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.m3-maintenanceoverview-018 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.m3-maintenanceoverview-019 {
+    width: 47px;
+    height: 47px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+    background: #eff6ff;
+    border-radius: 13px;
+}
+
+.m3-maintenanceoverview-020 {
+    margin: 0;
+    color: #111827;
+    font-size: 27px;
+    font-weight: 750;
+    letter-spacing: -0.5px;
+}
+
+.m3-maintenanceoverview-021 {
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.m3-maintenanceoverview-022 {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 15px;
+    color: #374151;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.m3-maintenanceoverview-022:hover {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.m3-maintenanceoverview-022:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Date range card */
+
+.m3-maintenanceoverview-023 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.m3-maintenanceoverview-024 {
+    flex-shrink: 0;
+    color: #2563eb;
+}
+
+.m3-maintenanceoverview-025 {
+    margin: 0;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.m3-maintenanceoverview-026 {
+    margin: 5px 0 0;
+    color: #9ca3af;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.m3-maintenanceoverview-027 {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto auto;
+    align-items: end;
+    gap: 13px;
+}
+
+.m3-maintenanceoverview-028 {
+    display: block;
+    margin-bottom: 8px;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.m3-maintenanceoverview-029 {
+    width: 100%;
+    height: 42px;
+    padding: 0 11px;
+    color: #374151;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-family: inherit;
+    font-size: 12px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.m3-maintenanceoverview-029:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.m3-maintenanceoverview-030,
+.m3-maintenanceoverview-031 {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 17px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.m3-maintenanceoverview-030 {
+    color: #fff;
+    background: #2563eb;
+    border: 1px solid #2563eb;
+}
+
+.m3-maintenanceoverview-030:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.m3-maintenanceoverview-030:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.m3-maintenanceoverview-031 {
+    color: #4b5563;
+    background: #fff;
+    border: 1px solid #d1d5db;
+}
+
+.m3-maintenanceoverview-031:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+/* Loading */
+
+.m3-maintenanceoverview-032 {
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 13px;
+    color: #6b7280;
+}
+
+.m3-maintenanceoverview-033 {
+    color: #2563eb;
+    animation: m3-overview-spin 1s linear infinite;
+}
+
+.m3-maintenanceoverview-034 {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* Analytics cards grid */
+
+.m3-maintenanceoverview-035 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-bottom: 23px;
+}
+
+.m3-maintenanceoverview-035 .m3-maintenanceoverview-001 {
+    margin: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.m3-maintenanceoverview-035 .m3-maintenanceoverview-001:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.07);
+}
+
+/* Equipment-wise downtime heading */
+
+.m3-maintenanceoverview-036 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding-bottom: 17px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.m3-maintenanceoverview-037 {
+    margin: 0;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.m3-maintenanceoverview-038 {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.m3-maintenanceoverview-039 {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Equipment downtime bars */
+
+.m3-maintenanceoverview-040 {
+    display: flex;
+    flex-direction: column;
+    gap: 23px;
+    padding-top: 21px;
+}
+
+.m3-maintenanceoverview-041 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.m3-maintenanceoverview-042 {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.m3-maintenanceoverview-043 {
+    margin: 0;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.m3-maintenanceoverview-044 {
+    width: 100%;
+    height: 11px;
+    overflow: hidden;
+    background: #f3f4f6;
+    border-radius: 999px;
+}
+
+.m3-maintenanceoverview-045 {
+    height: 100%;
+    min-width: 0;
+    background: linear-gradient(90deg, #3b82f6, #6366f1);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.m3-maintenanceoverview-046 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+/* Equipment details table */
+
+.m3-maintenanceoverview-047 {
+    margin-bottom: 17px;
+}
+
+.m3-maintenanceoverview-048 {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.m3-maintenanceoverview-049 {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.m3-maintenanceoverview-050 {
+    background: #f9fafb;
+}
+
+.m3-maintenanceoverview-051 {
+    padding: 14px 15px;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.m3-maintenanceoverview-052 {
+    background: #fff;
+}
+
+.m3-maintenanceoverview-053 {
+    transition: background 0.15s ease;
+}
+
+.m3-maintenanceoverview-053:hover {
+    background: #f9fafb;
+}
+
+.m3-maintenanceoverview-054,
+.m3-maintenanceoverview-055,
+.m3-maintenanceoverview-056 {
+    padding: 15px;
+    border-bottom: 1px solid #f0f1f3;
+    vertical-align: middle;
+    font-size: 12px;
+}
+
+.m3-maintenanceoverview-054 {
+    color: #1f2937;
+    font-weight: 650;
+}
+
+.m3-maintenanceoverview-055 {
+    color: #4b5563;
+    white-space: nowrap;
+}
+
+.m3-maintenanceoverview-056 {
+    color: #111827;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Analytics note */
+
+.m3-maintenanceoverview-057 {
+    padding: 17px 19px;
+    margin-bottom: 22px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+}
+
+.m3-maintenanceoverview-058 {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+}
+
+.m3-maintenanceoverview-059 {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #2563eb;
+}
+
+.m3-maintenanceoverview-060 {
+    margin: 0;
+    color: #1e40af;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.m3-maintenanceoverview-061 {
+    margin: 6px 0 0;
+    color: #1e40af;
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+/* Animations */
+
+@keyframes m3-overview-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+
+@media (max-width: 1050px) {
+    .m3-maintenanceoverview-016 {
+        padding: 20px;
+    }
+
+    .m3-maintenanceoverview-035 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .m3-maintenanceoverview-027 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .m3-maintenanceoverview-016 {
+        padding: 14px;
+    }
+
+    .m3-maintenanceoverview-017 {
+        align-items: flex-start;
+    }
+
+    .m3-maintenanceoverview-020 {
+        font-size: 21px;
+    }
+
+    .m3-maintenanceoverview-035 {
+        grid-template-columns: 1fr;
+        gap: 11px;
+    }
+
+    .m3-maintenanceoverview-027 {
+        grid-template-columns: 1fr;
+    }
+
+    .m3-maintenanceoverview-030,
+    .m3-maintenanceoverview-031 {
+        width: 100%;
+    }
+
+    .m3-maintenanceoverview-036 {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .m3-maintenanceoverview-041 {
+        align-items: flex-start;
+    }
+
+    .m3-maintenanceoverview-046 {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .m3-maintenanceoverview-001 {
+        padding: 17px;
+    }
+}
+
+@media (max-width: 420px) {
+    .m3-maintenanceoverview-017 {
+        flex-direction: column;
+    }
+
+    .m3-maintenanceoverview-022 {
+        width: 100%;
+    }
+
+    .m3-maintenanceoverview-020 {
+        font-size: 19px;
+    }
+
+    .m3-maintenanceoverview-004 {
+        font-size: 20px;
+    }
+
+    .m3-maintenanceoverview-041 {
+        flex-direction: column;
+    }
+
+    .m3-maintenanceoverview-042 {
+        text-align: left;
+    }
+
+    .m3-maintenanceoverview-057 {
+        padding: 14px;
+    }
+}

@@ -1,4 +1,5 @@
-import './MaintenanceSchedules.css'
+
+import '../styles/MaintenanceSchedules.css'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
     AlertCircle,
@@ -11,12 +12,10 @@ import {
     Search,
     ToggleLeft,
     ToggleRight,
-    Wrench,
     X,
 } from 'lucide-react'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
-
 
 const PAGE_SIZE = 8
 
@@ -97,6 +96,9 @@ export default function MaintenanceSchedules() {
     const isManager = role === 'LAB_MANAGER'
 
     const [schedules, setSchedules] = useState([])
+    const [resources, setResources] = useState([])
+    const [resourcesLoading, setResourcesLoading] = useState(false)
+
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [processingId, setProcessingId] = useState(null)
@@ -111,6 +113,7 @@ export default function MaintenanceSchedules() {
     const [modalOpen, setModalOpen] = useState(false)
     const [editingSchedule, setEditingSchedule] = useState(null)
     const [form, setForm] = useState(EMPTY_FORM)
+    const [resourceSearch, setResourceSearch] = useState('')
 
     const loadSchedules = useCallback(async () => {
         if (!isManager) {
@@ -136,9 +139,56 @@ export default function MaintenanceSchedules() {
         }
     }, [isManager])
 
+    const loadResources = useCallback(async () => {
+        if (!isManager) return
+
+        setResourcesLoading(true)
+
+        try {
+            const response = await api.get(
+                '/resources/maintenance-options'
+            )
+
+            setResources(getItems(response))
+        } catch (err) {
+            setResources([])
+            setError(
+                getErrorMessage(
+                    err,
+                    'Institution equipment could not be loaded.'
+                )
+            )
+        } finally {
+            setResourcesLoading(false)
+        }
+    }, [isManager])
+
     useEffect(() => {
         loadSchedules()
-    }, [loadSchedules])
+        loadResources()
+    }, [loadSchedules, loadResources])
+
+    const filteredResources = useMemo(() => {
+        const query = resourceSearch.trim().toLowerCase()
+
+        if (!query) return resources
+
+        return resources.filter((resource) => {
+            const name = String(resource.name || '').toLowerCase()
+            const category = String(resource.category || '').toLowerCase()
+            const location = String(resource.location || '').toLowerCase()
+
+            return (
+                name.includes(query) ||
+                category.includes(query) ||
+                location.includes(query)
+            )
+        })
+    }, [resources, resourceSearch])
+
+    const selectedResource = resources.find(
+        (resource) => String(resource.id) === String(form.resourceId)
+    )
 
     const filteredSchedules = useMemo(() => {
         const query = search.trim().toLowerCase()
@@ -186,12 +236,17 @@ export default function MaintenanceSchedules() {
         )
     }, [schedules])
 
-    const openCreateModal = () => {
+    const openCreateModal = async () => {
         setEditingSchedule(null)
         setForm(EMPTY_FORM)
+        setResourceSearch('')
         setError('')
         setSuccess('')
         setModalOpen(true)
+
+        if (resources.length === 0) {
+            await loadResources()
+        }
     }
 
     const openEditModal = (schedule) => {
@@ -205,6 +260,7 @@ export default function MaintenanceSchedules() {
             nextDueAt: toLocalInputValue(schedule.nextDueAt),
         })
 
+        setResourceSearch('')
         setError('')
         setSuccess('')
         setModalOpen(true)
@@ -216,6 +272,7 @@ export default function MaintenanceSchedules() {
         setModalOpen(false)
         setEditingSchedule(null)
         setForm(EMPTY_FORM)
+        setResourceSearch('')
     }
 
     const updateForm = (field, value) => {
@@ -231,8 +288,12 @@ export default function MaintenanceSchedules() {
         setError('')
         setSuccess('')
 
-        if (!editingSchedule && Number(form.resourceId) <= 0) {
-            setError('Please enter a valid Resource ID.')
+        const selected = resources.find(
+            (resource) => String(resource.id) === String(form.resourceId)
+        )
+
+        if (!selected) {
+            setError('Please select equipment from your institution.')
             return
         }
 
@@ -241,8 +302,10 @@ export default function MaintenanceSchedules() {
             return
         }
 
-        if (!Number.isInteger(Number(form.repeatEveryDays)) ||
-            Number(form.repeatEveryDays) <= 0) {
+        if (
+            !Number.isInteger(Number(form.repeatEveryDays)) ||
+            Number(form.repeatEveryDays) <= 0
+        ) {
             setError('Repeat interval must be a positive whole number of days.')
             return
         }
@@ -260,7 +323,7 @@ export default function MaintenanceSchedules() {
         }
 
         const payload = {
-            resourceId: Number(form.resourceId),
+            resourceId: Number(selected.id),
             title: form.title.trim(),
             description: form.description.trim(),
             repeatEveryDays: Number(form.repeatEveryDays),
@@ -286,6 +349,7 @@ export default function MaintenanceSchedules() {
             setModalOpen(false)
             setEditingSchedule(null)
             setForm(EMPTY_FORM)
+            setResourceSearch('')
 
             await loadSchedules()
         } catch (err) {
@@ -346,7 +410,9 @@ export default function MaintenanceSchedules() {
             <div className="m3-maintenanceschedules-001">
                 <div className="m3-maintenanceschedules-002">
                     <AlertCircle size={22} />
-                    <h2 className="m3-maintenanceschedules-003">Access Restricted</h2>
+                    <h2 className="m3-maintenanceschedules-003">
+                        Access Restricted
+                    </h2>
                 </div>
                 <p className="m3-maintenanceschedules-004">
                     Only Lab Managers can manage preventive maintenance schedules.
@@ -500,7 +566,9 @@ export default function MaintenanceSchedules() {
                 {loading ? (
                     <div className="m3-maintenanceschedules-028">
                         <RefreshCw size={25} className="m3-maintenanceschedules-029" />
-                        <p className="m3-maintenanceschedules-030">Loading maintenance schedules...</p>
+                        <p className="m3-maintenanceschedules-030">
+                            Loading maintenance schedules...
+                        </p>
                     </div>
                 ) : visibleSchedules.length === 0 ? (
                     <div className="m3-maintenanceschedules-031">
@@ -558,9 +626,6 @@ export default function MaintenanceSchedules() {
                                                 <p className="m3-maintenanceschedules-045">
                                                     {schedule.resourceName || 'Resource'}
                                                 </p>
-                                                <p className="m3-maintenanceschedules-043">
-                                                    Resource ID: {schedule.resourceId ?? 'N/A'}
-                                                </p>
                                             </td>
 
                                             <td className="m3-maintenanceschedules-046">
@@ -576,11 +641,11 @@ export default function MaintenanceSchedules() {
                                             </td>
 
                                             <td className="m3-maintenanceschedules-042">
-                          <span
-                              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[status] || STATUS_STYLES.UNKNOWN}`}
-                          >
-                            {status.replaceAll('_', ' ')}
-                          </span>
+                                                    <span
+                                                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[status] || STATUS_STYLES.UNKNOWN}`}
+                                                    >
+                                                        {status.replaceAll('_', ' ')}
+                                                    </span>
                                             </td>
 
                                             <td className="m3-maintenanceschedules-042">
@@ -640,8 +705,8 @@ export default function MaintenanceSchedules() {
                                 </button>
 
                                 <span className="m3-maintenanceschedules-055">
-                  Page {page} of {totalPages}
-                </span>
+                                    Page {page} of {totalPages}
+                                </span>
 
                                 <button
                                     type="button"
@@ -663,7 +728,9 @@ export default function MaintenanceSchedules() {
                         <div className="m3-maintenanceschedules-058">
                             <div>
                                 <h2 className="m3-maintenanceschedules-059">
-                                    {editingSchedule ? 'Edit Maintenance Schedule' : 'Create Maintenance Schedule'}
+                                    {editingSchedule
+                                        ? 'Edit Maintenance Schedule'
+                                        : 'Create Maintenance Schedule'}
                                 </h2>
                                 <p className="m3-maintenanceschedules-021">
                                     Configure recurring equipment maintenance.
@@ -681,28 +748,69 @@ export default function MaintenanceSchedules() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="m3-maintenanceschedules-061">
-                            {!editingSchedule && (
-                                <div>
-                                    <label className="m3-maintenanceschedules-062">
-                                        Resource ID <span className="m3-maintenanceschedules-063">*</span>
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={form.resourceId}
-                                        onChange={(event) => updateForm('resourceId', event.target.value)}
-                                        placeholder="Enter equipment resource ID"
-                                        className="m3-maintenanceschedules-064"
-                                        required
-                                    />
-                                </div>
-                            )}
+                            <div>
+                                <label className="m3-maintenanceschedules-062">
+                                    Equipment <span className="m3-maintenanceschedules-063">*</span>
+                                </label>
 
-                            {editingSchedule && (
-                                <div className="m3-maintenanceschedules-065">
-                                    Equipment Resource ID: <strong>{editingSchedule.resourceId}</strong>
-                                </div>
-                            )}
+                                <input
+                                    type="search"
+                                    value={resourceSearch}
+                                    onChange={(event) => setResourceSearch(event.target.value)}
+                                    placeholder="Search your institution's equipment..."
+                                    className="m3-maintenanceschedules-064"
+                                    disabled={resourcesLoading || saving}
+                                />
+
+                                <select
+                                    value={form.resourceId}
+                                    onChange={(event) => updateForm('resourceId', event.target.value)}
+                                    className="m3-maintenanceschedules-064"
+                                    required
+                                    disabled={resourcesLoading || saving || resources.length === 0}
+                                >
+                                    <option value="">
+                                        {resourcesLoading
+                                            ? 'Loading equipment...'
+                                            : resources.length === 0
+                                                ? 'No active equipment available'
+                                                : 'Select equipment'}
+                                    </option>
+
+                                    {filteredResources.map((resource) => (
+                                        <option
+                                            key={resource.id}
+                                            value={resource.id}
+                                        >
+                                            {resource.name}
+                                            {resource.category
+                                                ? ` — ${resource.category}`
+                                                : ''}
+                                            {resource.location
+                                                ? ` (${resource.location})`
+                                                : ''}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {selectedResource && (
+                                    <p className="m3-maintenanceschedules-043">
+                                        Selected: {selectedResource.name}
+                                    </p>
+                                )}
+
+                                {!resourcesLoading && resources.length === 0 && (
+                                    <p className="m3-maintenanceschedules-043">
+                                        No active equipment was found for your institution.
+                                    </p>
+                                )}
+
+                                {resources.length > 0 && filteredResources.length === 0 && (
+                                    <p className="m3-maintenanceschedules-043">
+                                        No equipment matches your search.
+                                    </p>
+                                )}
+                            </div>
 
                             <div>
                                 <label className="m3-maintenanceschedules-062">
@@ -775,7 +883,7 @@ export default function MaintenanceSchedules() {
 
                                 <button
                                     type="submit"
-                                    disabled={saving}
+                                    disabled={saving || resourcesLoading || resources.length === 0}
                                     className="m3-maintenanceschedules-069"
                                 >
                                     {saving

@@ -7,6 +7,10 @@ import com.labresource.platform.institution.entity.Institution;
 import com.labresource.platform.institution.repository.InstitutionRepository;
 import com.labresource.platform.resource.entity.Resource;
 import com.labresource.platform.resource.repository.ResourceRepository;
+import com.labresource.platform.user.entity.User;
+import com.labresource.platform.user.repository.UserRepository;
+
+import org.springframework.security.core.Authentication;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,14 +30,17 @@ public class ResourceController {
     private final ResourceRepository resourceRepository;
     private final InstitutionRepository institutionRepository;
     private final DepartmentRepository departmentRepository;
+    private final UserRepository userRepository;
 
     public ResourceController(
             ResourceRepository resourceRepository,
             InstitutionRepository institutionRepository,
-            DepartmentRepository departmentRepository) {
+            DepartmentRepository departmentRepository,
+            UserRepository userRepository) {
         this.resourceRepository = resourceRepository;
         this.institutionRepository = institutionRepository;
         this.departmentRepository = departmentRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -45,8 +52,34 @@ public class ResourceController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) Long institutionId,
-            @RequestParam(required = false) Long departmentId) {
+            @RequestParam(required = false) Long departmentId,
+            Authentication authentication) {
 
+        User currentUser = userRepository.findByEmailWithProfile(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Authenticated user not found"));
+
+        String roleName = currentUser.getRole() == null
+                ? "" : currentUser.getRole().getName();
+        boolean systemAdmin = "SYSTEM_ADMIN".equalsIgnoreCase(roleName)
+                || "ROLE_SYSTEM_ADMIN".equalsIgnoreCase(roleName);
+
+        Long effectiveInstitutionId = institutionId;
+        if (!systemAdmin) {
+            if (currentUser.getInstitution() == null
+                    || currentUser.getInstitution().getId() == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Your account is not linked to an institution");
+            }
+            Long userInstitutionId = currentUser.getInstitution().getId();
+            if (institutionId != null && !institutionId.equals(userInstitutionId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "You cannot access resources from another institution");
+            }
+            effectiveInstitutionId = userInstitutionId;
+        }
+
+        final Long institutionScope = effectiveInstitutionId;
         return resourceRepository.findAll()
                 .stream()
                 .filter(r -> Boolean.TRUE.equals(r.getIsActive()))
@@ -63,9 +96,9 @@ public class ResourceController {
                 .filter(r -> tag == null || tag.isBlank()
                         || (r.getTags() != null && r.getTags().stream()
                         .anyMatch(t -> equalsIgnoreCase(t, tag))))
-                .filter(r -> institutionId == null
+                .filter(r -> institutionScope == null
                         || (r.getInstitution() != null
-                        && institutionId.equals(r.getInstitution().getId())))
+                        && institutionScope.equals(r.getInstitution().getId())))
                 .filter(r -> departmentId == null
                         || (r.getDepartment() != null
                         && departmentId.equals(r.getDepartment().getId())))
@@ -74,8 +107,24 @@ public class ResourceController {
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
-    public Resource getResourceById(@PathVariable Long id) {
+    public Resource getResourceById(
+            @PathVariable Long id,
+            Authentication authentication) {
         Resource resource = getExistingResource(id);
+        User currentUser = userRepository.findByEmailWithProfile(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Authenticated user not found"));
+        String roleName = currentUser.getRole() == null
+                ? "" : currentUser.getRole().getName();
+        boolean systemAdmin = "SYSTEM_ADMIN".equalsIgnoreCase(roleName)
+                || "ROLE_SYSTEM_ADMIN".equalsIgnoreCase(roleName);
+        if (!systemAdmin && (currentUser.getInstitution() == null
+                || resource.getInstitution() == null
+                || !currentUser.getInstitution().getId()
+                .equals(resource.getInstitution().getId()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You cannot access resources from another institution");
+        }
 
         if (!Boolean.TRUE.equals(resource.getIsActive())) {
             throw new ResponseStatusException(

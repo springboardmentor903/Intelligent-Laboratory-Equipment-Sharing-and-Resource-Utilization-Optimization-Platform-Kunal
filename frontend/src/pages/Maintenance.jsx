@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Wrench,
@@ -9,12 +10,18 @@ import {
     AlertCircle,
     CheckCircle2,
     X,
+    ClipboardList,
+    Check,
+    XCircle,
 } from "lucide-react";
+
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
+const PAGE_SIZE = 8;
+
 function getRoleKey(user) {
-    const rawRole =
+    const role =
         user?.role?.name ??
         user?.role?.roleName ??
         user?.roleName ??
@@ -22,7 +29,7 @@ function getRoleKey(user) {
         user?.authorities?.[0]?.authority ??
         "";
 
-    return String(rawRole).replace(/^ROLE_/, "").toUpperCase();
+    return String(role).replace(/^ROLE_/, "").trim().toUpperCase();
 }
 
 function getList(data) {
@@ -33,133 +40,220 @@ function getList(data) {
     return [];
 }
 
+function getResourceName(item) {
+    return (
+        item?.resource?.name ||
+        item?.resourceName ||
+        item?.equipment?.name ||
+        `Equipment #${item?.resource?.id || item?.resourceId || "—"}`
+    );
+}
+
+function getRequesterName(item) {
+    return (
+        item?.requester?.fullName ||
+        item?.requester?.name ||
+        item?.requesterName ||
+        item?.createdBy?.fullName ||
+        "Requester"
+    );
+}
+
 function formatDate(value) {
-    if (!value) return "Not scheduled";
+    if (!value) return "—";
 
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value);
 
-    return date.toLocaleString();
+    return Number.isNaN(date.getTime())
+        ? String(value)
+        : date.toLocaleString();
 }
 
 function getStatus(item) {
-    return String(item?.status ?? "PENDING").toUpperCase();
+    return String(item?.status || "PENDING").toUpperCase();
 }
 
-function statusClass(status) {
+function getStatusStyle(status) {
     switch (status) {
+        case "APPROVED":
         case "COMPLETED":
-        case "RESOLVED":
-            return "completed";
-        case "IN_PROGRESS":
-            return "in-progress";
-        case "CANCELLED":
+            return "bg-green-100 text-green-700";
+
         case "REJECTED":
-            return "cancelled";
-        case "SCHEDULED":
-            return "scheduled";
+        case "CANCELLED":
+            return "bg-red-100 text-red-700";
+
+        case "IN_PROGRESS":
+            return "bg-blue-100 text-blue-700";
+
+        case "PENDING":
+        case "REQUESTED":
+            return "bg-amber-100 text-amber-700";
+
         default:
-            return "pending";
+            return "bg-slate-100 text-slate-700";
     }
-}export default function Maintenance() {
+}
+
+function getPriorityStyle(priority) {
+    switch (String(priority || "").toUpperCase()) {
+        case "HIGH":
+        case "URGENT":
+            return "bg-red-100 text-red-700";
+
+        case "MEDIUM":
+            return "bg-amber-100 text-amber-700";
+
+        case "LOW":
+            return "bg-green-100 text-green-700";
+
+        default:
+            return "bg-slate-100 text-slate-600";
+    }
+}
+
+export default function Maintenance() {
     const { user } = useAuth();
     const role = getRoleKey(user);
 
     const canCreate = [
+        "RESEARCHER_STUDENT",
+        "DEPARTMENT_HEAD",
         "LAB_TECHNICIAN",
-        "LAB_MANAGER",
-        "SYSTEM_ADMIN",
     ].includes(role);
 
-    const canUpdateStatus = [
-        "LAB_MANAGER",
-        "SYSTEM_ADMIN",
-    ].includes(role);
+    const isManager = role === "LAB_MANAGER";
 
     const [requests, setRequests] = useState([]);
     const [resources, setResources] = useState([]);
+
     const [loading, setLoading] = useState(true);
+    const [resourceLoading, setResourceLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [updatingId, setUpdatingId] = useState(null);
+    const [actionId, setActionId] = useState(null);
+
     const [showForm, setShowForm] = useState(false);
+    const [reviewItem, setReviewItem] = useState(null);
+    const [reviewAction, setReviewAction] = useState("");
+
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("ALL");
+    const [priorityFilter, setPriorityFilter] = useState("ALL");
+    const [page, setPage] = useState(1);
+
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
     const [form, setForm] = useState({
         resourceId: "",
+        title: "",
         description: "",
-        scheduledStart: "",
-        scheduledEnd: "",
+        priority: "MEDIUM",
     });
 
-    const [statusForms, setStatusForms] = useState({});
+    const [remarks, setRemarks] = useState("");
 
-    const loadData = useCallback(async () => {
+    const loadResources = useCallback(async () => {
+        if (!canCreate) return;
+
+        setResourceLoading(true);
+
+        try {
+            const response = await api.get("/resources");
+            setResources(
+                getList(response.data).filter(
+                    (resource) =>
+                        resource.isActive !== false &&
+                        String(resource.status || "AVAILABLE").toUpperCase()
+                        !== "UNDER_MAINTENANCE"
+                )
+            );
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Equipment list load nahi hui."
+            );
+        } finally {
+            setResourceLoading(false);
+        }
+    }, [canCreate]);
+
+    const loadRequests = useCallback(async () => {
         setLoading(true);
         setError("");
 
         try {
-            const [maintenanceResponse, resourceResponse] =
-                await Promise.all([
-                    api.get("/maintenance"),
-                    api.get("/resources"),
-                ]);
+            const endpoint = isManager
+                ? "/maintenance/requests/queue"
+                : "/maintenance/requests/my";
 
-            setRequests(getList(maintenanceResponse.data));
-            setResources(getList(resourceResponse.data));
+            const response = await api.get(endpoint);
+            setRequests(getList(response.data));
+            setPage(1);
         } catch (err) {
+            setRequests([]);
             setError(
-                err?.response?.data?.message ||
-                err?.response?.data?.error ||
-                "Maintenance data load nahi hua. API aur login permission check karein."
+                err.response?.data?.message ||
+                `Maintenance requests load nahi hui. HTTP ${err.response?.status || "network error"}.`
             );
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isManager]);
 
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        loadRequests();
+        loadResources();
+    }, [loadRequests, loadResources]);
 
     const filteredRequests = useMemo(() => {
         const query = search.trim().toLowerCase();
 
-        if (!query) return requests;
-
         return requests.filter((item) => {
-            const resource = item?.resource ?? item?.equipment ?? {};
+            const status = getStatus(item);
+            const priority = String(item?.priority || "").toUpperCase();
 
             const searchable = [
                 item?.id,
+                item?.title,
                 item?.description,
-                item?.status,
-                item?.resolutionNotes,
-                resource?.id,
-                resource?.name,
-                resource?.resourceName,
-                resource?.location,
+                item?.requester?.fullName,
+                item?.requesterName,
+                getResourceName(item),
             ]
                 .filter(Boolean)
                 .join(" ")
                 .toLowerCase();
 
-            return searchable.includes(query);
+            return (
+                (!query || searchable.includes(query)) &&
+                (statusFilter === "ALL" || status === statusFilter) &&
+                (priorityFilter === "ALL" || priority === priorityFilter)
+            );
         });
-    }, [requests, search]);
+    }, [requests, search, statusFilter, priorityFilter]);
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredRequests.length / PAGE_SIZE)
+    );
+
+    const visibleRequests = filteredRequests.slice(
+        (page - 1) * PAGE_SIZE,
+        page * PAGE_SIZE
+    );
 
     const counts = useMemo(
         () => ({
             total: requests.length,
             pending: requests.filter((item) =>
-                ["PENDING", "REQUESTED", "OPEN"].includes(getStatus(item))
+                ["PENDING", "REQUESTED"].includes(getStatus(item))
             ).length,
-            inProgress: requests.filter((item) =>
-                ["IN_PROGRESS", "IN PROGRESS"].includes(getStatus(item))
+            approved: requests.filter(
+                (item) => getStatus(item) === "APPROVED"
             ).length,
-            completed: requests.filter((item) =>
-                ["COMPLETED", "RESOLVED"].includes(getStatus(item))
+            rejected: requests.filter(
+                (item) => getStatus(item) === "REJECTED"
             ).length,
         }),
         [requests]
@@ -177,572 +271,655 @@ function statusClass(status) {
         setError("");
         setSuccess("");
 
-        if (!form.resourceId || !form.description.trim()) {
-            setError(
-                "Equipment aur maintenance description bharna zaroori hai."
-            );
-            return;
-        }
-
         if (
-            form.scheduledStart &&
-            form.scheduledEnd &&
-            form.scheduledEnd <= form.scheduledStart
+            !form.resourceId ||
+            !form.title.trim() ||
+            !form.description.trim()
         ) {
-            setError(
-                "Scheduled end time, start time ke baad hona chahiye."
-            );
+            setError("Equipment, title aur description bharna zaroori hai.");
             return;
         }
-
-        const payload = {
-            resourceId: String(form.resourceId),
-            description: form.description.trim(),
-            scheduledStart: form.scheduledStart
-                ? form.scheduledStart.length === 16
-                    ? `${form.scheduledStart}:00`
-                    : form.scheduledStart
-                : "",
-            scheduledEnd: form.scheduledEnd
-                ? form.scheduledEnd.length === 16
-                    ? `${form.scheduledEnd}:00`
-                    : form.scheduledEnd
-                : "",
-        };
 
         setSubmitting(true);
 
         try {
-            await api.post("/maintenance", payload);
+            await api.post("/maintenance/requests", {
+                resourceId: Number(form.resourceId),
+                title: form.title.trim(),
+                description: form.description.trim(),
+                priority: form.priority,
+            });
 
-            setSuccess("Maintenance request successfully create ho gayi.");
+            setSuccess("Maintenance request successfully submit ho gayi.");
 
             setForm({
                 resourceId: "",
+                title: "",
                 description: "",
-                scheduledStart: "",
-                scheduledEnd: "",
+                priority: "MEDIUM",
             });
 
             setShowForm(false);
-            await loadData();
+            await loadRequests();
         } catch (err) {
             setError(
-                err?.response?.data?.message ||
-                err?.response?.data?.error ||
-                "Request create nahi hui. Resource ID aur backend validation check karein."
+                err.response?.data?.message ||
+                "Maintenance request submit nahi hui."
             );
         } finally {
             setSubmitting(false);
         }
     }
 
-    async function handleStatusUpdate(item) {
-        const id = item?.id;
-
-        if (id == null) {
-            setError("Request ID response mein nahi mila.");
-            return;
-        }
-
-        const values = statusForms[id] ?? {};
-        const status = String(values.status ?? "").trim();
-
-        if (!status) {
-            setError("Status select karein.");
-            return;
-        }
-
+    function openReview(item, action) {
+        setReviewItem(item);
+        setReviewAction(action);
+        setRemarks("");
         setError("");
         setSuccess("");
-        setUpdatingId(id);
+    }
+
+    async function submitReview(event) {
+        event.preventDefault();
+
+        if (!reviewItem?.id) {
+            setError("Maintenance request ID nahi mila.");
+            return;
+        }
+
+        if (!remarks.trim()) {
+            setError("Review remarks likhna zaroori hai.");
+            return;
+        }
+
+        setActionId(reviewItem.id);
+        setError("");
+        setSuccess("");
 
         try {
-            await api.patch(`/maintenance/${id}/status`, {
-                status,
-                resolutionNotes: values.resolutionNotes ?? "",
+            const endpoint =
+                `/maintenance/requests/${reviewItem.id}/${reviewAction}`;
+
+            await api.post(endpoint, {
+                remarks: remarks.trim(),
             });
 
             setSuccess(
-                `Maintenance request #${id} ka status update ho gaya.`
+                `Maintenance request #${reviewItem.id} successfully ${reviewAction === "approve" ? "approved" : "rejected"} ho gayi.`
             );
 
-            await loadData();
+            setReviewItem(null);
+            setReviewAction("");
+            setRemarks("");
+
+            await loadRequests();
         } catch (err) {
             setError(
-                err?.response?.data?.message ||
-                err?.response?.data?.error ||
-                "Status update nahi hua. Backend mein allowed status values check karein."
+                err.response?.data?.message ||
+                "Request review nahi ho saki. Backend response check karo."
             );
         } finally {
-            setUpdatingId(null);
+            setActionId(null);
         }
     }
 
-    function updateStatusForm(id, field, value) {
-        setStatusForms((previous) => ({
-            ...previous,
-            [id]: {
-                ...previous[id],
-                [field]: value,
-            },
-        }));
-    }  return (
-        <div className="maintenance-page min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-            <div className="mx-auto max-w-7xl space-y-6">
-                <header className="maintenance-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-700">
-                            <Wrench size={17} />
-                            Maintenance Management
-                        </div>
+    if (
+        !canCreate &&
+        !isManager &&
+        role !== "INSTITUTION_ADMIN"
+    ) {
+        return (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
+                <div className="flex items-center gap-2 font-semibold">
+                    <AlertCircle size={20} />
+                    Maintenance access unavailable
+                </div>
+                <p className="mt-2 text-sm">
+                    Is account role ko maintenance requests access nahi diya gaya hai.
+                </p>
+            </div>
+        );
+    }
 
-                        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-                            Maintenance Requests
-                        </h1>
+    if (role === "INSTITUTION_ADMIN") {
+        return (
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+                <h2 className="text-lg font-bold text-slate-900">
+                    Maintenance Overview
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                    Institution maintenance history aur downtime analytics
+                    dashboard agle T8 steps mein connect kiye jayenge.
+                </p>
+            </div>
+        );
+    }
 
-                        <p className="mt-2 text-sm text-slate-500">
-                            Equipment repair, preventive maintenance aur service
-                            requests track karein.
-                        </p>
+    return (
+        <div className="min-h-screen space-y-6 bg-slate-50 p-4 sm:p-6">
+            <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-700">
+                        <Wrench size={17} />
+                        Maintenance Management
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={loadData}
-                            disabled={loading}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-                        >
-                            <RefreshCw
-                                size={16}
-                                className={loading ? "animate-spin" : ""}
-                            />
-                            Refresh
-                        </button>
+                    <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+                        {isManager ? "Maintenance Request Queue" : "My Maintenance Requests"}
+                    </h1>
 
-                        {canCreate && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowForm((previous) => !previous);
-                                    setError("");
-                                }}
-                                className="maintenance-btn inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-                            >
-                                {showForm ? <X size={16} /> : <Plus size={17} />}
-                                {showForm ? "Close Form" : "New Request"}
-                            </button>
-                        )}
-                    </div>
-                </header>
-
-                {error && (
-                    <div
-                        role="alert"
-                        className="maintenance-error flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-                    >
-                        <AlertCircle size={19} className="mt-0.5 shrink-0" />
-                        <span>{error}</span>
-                    </div>
-                )}
-
-                {success && (
-                    <div
-                        role="status"
-                        className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700"
-                    >
-                        <CheckCircle2 size={19} className="mt-0.5 shrink-0" />
-                        <span>{success}</span>
-                    </div>
-                )}
-
-                <div className="maintenance-stats grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    {[
-                        {
-                            label: "Total Requests",
-                            value: counts.total,
-                            icon: Wrench,
-                            color: "text-blue-600 bg-blue-50",
-                        },
-                        {
-                            label: "Pending",
-                            value: counts.pending,
-                            icon: Clock,
-                            color: "text-amber-600 bg-amber-50",
-                        },
-                        {
-                            label: "In Progress",
-                            value: counts.inProgress,
-                            icon: RefreshCw,
-                            color: "text-indigo-600 bg-indigo-50",
-                        },
-                        {
-                            label: "Completed",
-                            value: counts.completed,
-                            icon: CheckCircle2,
-                            color: "text-green-600 bg-green-50",
-                        },
-                    ].map((card) => {
-                        const Icon = card.icon;
-
-                        return (
-                            <div
-                                key={card.label}
-                                className="maintenance-stat-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm font-medium text-slate-500">
-                                        {card.label}
-                                    </p>
-
-                                    <span className={`rounded-xl p-2.5 ${card.color}`}>
-                    <Icon size={20} />
-                  </span>
-                                </div>
-
-                                <p className="mt-4 text-3xl font-bold text-slate-900">
-                                    {card.value}
-                                </p>
-                            </div>
-                        );
-                    })}
+                    <p className="mt-2 text-sm text-slate-500">
+                        {isManager
+                            ? "Review equipment maintenance requests from your institution."
+                            : "Report equipment problems and track your maintenance requests."}
+                    </p>
                 </div>
 
-                {showForm && canCreate && (
-                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 className="text-lg font-bold text-slate-900">
-                            Create Maintenance Request
-                        </h2>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={loadRequests}
+                        disabled={loading}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                    >
+                        <RefreshCw
+                            size={16}
+                            className={loading ? "animate-spin" : ""}
+                        />
+                        Refresh
+                    </button>
 
+                    {canCreate && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowForm((value) => !value);
+                                setError("");
+                                setSuccess("");
+                            }}
+                            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                        >
+                            {showForm ? <X size={17} /> : <Plus size={17} />}
+                            {showForm ? "Close Form" : "Report a Problem"}
+                        </button>
+                    )}
+                </div>
+            </header>
+
+            {error && (
+                <div
+                    role="alert"
+                    className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+                >
+                    <AlertCircle size={19} className="mt-0.5 shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            {success && (
+                <div
+                    role="status"
+                    className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700"
+                >
+                    <CheckCircle2 size={19} className="mt-0.5 shrink-0" />
+                    <span>{success}</span>
+                </div>
+            )}
+
+            {showForm && canCreate && (
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="mb-5">
+                        <h2 className="text-lg font-bold text-slate-900">
+                            Report Equipment Problem
+                        </h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Equipment aur problem ki details enter karein.
+                            Problem ki details submit karo. Lab Manager request review karega.
                         </p>
+                    </div>
 
-                        <form onSubmit={handleCreate} className="maintenance-form mt-5 space-y-5">
-                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                                <div className="maintenance-form-group">
-                                    <label htmlFor="maintenance-resource">
-                                        Equipment <span className="text-red-500">*</span>
-                                    </label>
-
-                                    <select
-                                        id="maintenance-resource"
-                                        value={form.resourceId}
-                                        onChange={(event) =>
-                                            updateForm("resourceId", event.target.value)
-                                        }
-                                        required
-                                    >
-                                        <option value="">Select equipment</option>
-
-                                        {resources.map((resource) => {
-                                            const id = resource.id ?? resource.resourceId;
-                                            const name =
-                                                resource.name ??
-                                                resource.resourceName ??
-                                                resource.title ??
-                                                `Equipment #${id}`;
-
-                                            return (
-                                                <option key={id} value={id}>
-                                                    {name} (ID: {id})
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
-
-                                    {resources.length === 0 && (
-                                        <p className="text-xs text-amber-700">
-                                            Equipment list empty hai. /resources API check karein.
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="maintenance-form-group">
-                                    <label htmlFor="maintenance-description">
-                                        Problem / Description{" "}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-
-                                    <input
-                                        id="maintenance-description"
-                                        value={form.description}
-                                        onChange={(event) =>
-                                            updateForm("description", event.target.value)
-                                        }
-                                        placeholder="e.g. Projector display issue"
-                                        required
-                                        maxLength={1000}
-                                    />
-                                </div>
-
-                                <div className="maintenance-form-group">
-                                    <label htmlFor="maintenance-start">
-                                        Scheduled Start (optional)
-                                    </label>
-
-                                    <input
-                                        id="maintenance-start"
-                                        type="datetime-local"
-                                        value={form.scheduledStart}
-                                        onChange={(event) =>
-                                            updateForm("scheduledStart", event.target.value)
-                                        }
-                                    />
-                                </div>
-
-                                <div className="maintenance-form-group">
-                                    <label htmlFor="maintenance-end">
-                                        Scheduled End (optional)
-                                    </label>
-
-                                    <input
-                                        id="maintenance-end"
-                                        type="datetime-local"
-                                        value={form.scheduledEnd}
-                                        onChange={(event) =>
-                                            updateForm("scheduledEnd", event.target.value)
-                                        }
-                                        min={form.scheduledStart || undefined}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-3">
-                                <button
-                                    type="submit"
-                                    disabled={submitting || resources.length === 0}
-                                    className="maintenance-btn"
+                    <form onSubmit={handleCreate} className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <label className="block">
+                                <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                                    Equipment *
+                                </span>
+                                <select
+                                    value={form.resourceId}
+                                    onChange={(event) =>
+                                        updateForm("resourceId", event.target.value)
+                                    }
+                                    disabled={resourceLoading}
+                                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    required
                                 >
-                                    <Plus size={17} />
-                                    {submitting ? "Creating..." : "Create Request"}
-                                </button>
+                                    <option value="">
+                                        {resourceLoading
+                                            ? "Loading equipment..."
+                                            : "Select equipment"}
+                                    </option>
+                                    {resources.map((resource) => (
+                                        <option key={resource.id} value={resource.id}>
+                                            {resource.name} — #{resource.id}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
 
-                                <button
-                                    type="button"
-                                    onClick={() => setShowForm(false)}
-                                    className="maintenance-btn-secondary"
+                            <label className="block">
+                                <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                                    Priority *
+                                </span>
+                                <select
+                                    value={form.priority}
+                                    onChange={(event) =>
+                                        updateForm("priority", event.target.value)
+                                    }
+                                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 >
-                                    Cancel
-                                </button>
+                                    <option value="LOW">Low</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="HIGH">High</option>
+                                    <option value="URGENT">Urgent</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <label className="block">
+                            <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                                Problem Title *
+                            </span>
+                            <input
+                                type="text"
+                                value={form.title}
+                                onChange={(event) =>
+                                    updateForm("title", event.target.value)
+                                }
+                                maxLength={150}
+                                placeholder="Example: Microscope not powering on"
+                                className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                required
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                                Problem Description *
+                            </span>
+                            <textarea
+                                value={form.description}
+                                onChange={(event) =>
+                                    updateForm("description", event.target.value)
+                                }
+                                rows={4}
+                                maxLength={1000}
+                                placeholder="Describe the issue, error, or repair required..."
+                                className="w-full resize-y rounded-xl border border-slate-300 px-3 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                required
+                            />
+                            <span className="mt-1 block text-right text-xs text-slate-400">
+                                {form.description.length}/1000
+                            </span>
+                        </label>
+
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowForm(false)}
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={submitting || resources.length === 0}
+                                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {submitting ? (
+                                    <RefreshCw size={16} className="animate-spin" />
+                                ) : (
+                                    <Plus size={16} />
+                                )}
+                                {submitting ? "Submitting..." : "Submit Request"}
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            )}
+
+            <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {[
+                    {
+                        label: "Total Requests",
+                        value: counts.total,
+                        icon: ClipboardList,
+                        color: "text-blue-600 bg-blue-50",
+                    },
+                    {
+                        label: "Pending",
+                        value: counts.pending,
+                        icon: Clock,
+                        color: "text-amber-600 bg-amber-50",
+                    },
+                    {
+                        label: "Approved",
+                        value: counts.approved,
+                        icon: CheckCircle2,
+                        color: "text-green-600 bg-green-50",
+                    },
+                    {
+                        label: "Rejected",
+                        value: counts.rejected,
+                        icon: XCircle,
+                        color: "text-red-600 bg-red-50",
+                    },
+                ].map((card) => {
+                    const Icon = card.icon;
+
+                    return (
+                        <div
+                            key={card.label}
+                            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                        >
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm text-slate-500">
+                                    {card.label}
+                                </span>
+                                <span className={`rounded-lg p-2 ${card.color}`}>
+                                    <Icon size={17} />
+                                </span>
                             </div>
-                        </form>
-                    </section>
-                )}        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="mt-3 text-2xl font-bold text-slate-900">
+                                {card.value}
+                            </div>
+                        </div>
+                    );
+                })}
+            </section>
+
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:p-5">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">
-                            All Maintenance Requests
+                        <h2 className="font-bold text-slate-900">
+                            {isManager ? "Requests to Review" : "Request History"}
                         </h2>
-
                         <p className="mt-1 text-sm text-slate-500">
                             {filteredRequests.length} request(s) found
                         </p>
                     </div>
 
-                    <div className="relative w-full sm:max-w-xs">
-                        <Search
-                            size={17}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                        />
+                    <div className="grid gap-2 sm:grid-cols-3">
+                        <div className="relative sm:col-span-1">
+                            <Search
+                                size={17}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            />
+                            <input
+                                type="search"
+                                value={search}
+                                onChange={(event) => {
+                                    setSearch(event.target.value);
+                                    setPage(1);
+                                }}
+                                placeholder="Search requests..."
+                                className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-blue-500"
+                            />
+                        </div>
 
-                        <input
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Search requests..."
-                            aria-label="Search maintenance requests"
-                            className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-blue-500"
-                        />
+                        <select
+                            value={statusFilter}
+                            onChange={(event) => {
+                                setStatusFilter(event.target.value);
+                                setPage(1);
+                            }}
+                            className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                        >
+                            <option value="ALL">All statuses</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+
+                        <select
+                            value={priorityFilter}
+                            onChange={(event) => {
+                                setPriorityFilter(event.target.value);
+                                setPage(1);
+                            }}
+                            className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                        >
+                            <option value="ALL">All priorities</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="URGENT">Urgent</option>
+                        </select>
                     </div>
                 </div>
 
                 {loading ? (
-                    <div className="maintenance-loading flex items-center justify-center gap-3 p-12 text-sm text-slate-500">
+                    <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-500">
                         <RefreshCw size={18} className="animate-spin" />
                         Loading maintenance requests...
                     </div>
-                ) : filteredRequests.length === 0 ? (
-                    <div className="maintenance-empty p-12 text-center">
-                        <Wrench size={36} className="mx-auto text-slate-300" />
-
+                ) : visibleRequests.length === 0 ? (
+                    <div className="p-12 text-center">
+                        <ClipboardList
+                            size={34}
+                            className="mx-auto text-slate-300"
+                        />
                         <h3 className="mt-3 font-semibold text-slate-800">
                             No maintenance requests found
                         </h3>
-
                         <p className="mt-1 text-sm text-slate-500">
-                            New Request se pehli maintenance request create kar sakte hain.
+                            {search || statusFilter !== "ALL" || priorityFilter !== "ALL"
+                                ? "Try changing your search or filters."
+                                : "New maintenance requests will appear here."}
                         </p>
                     </div>
                 ) : (
-                    <div className="maintenance-grid grid grid-cols-1 gap-4 p-4 lg:grid-cols-2">
-                        {filteredRequests.map((item) => {
-                            const id = item.id;
-                            const status = getStatus(item);
-                            const resource = item.resource ?? item.equipment ?? {};
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[850px] text-left text-sm">
+                                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                                <tr>
+                                    <th className="px-5 py-3">Request</th>
+                                    <th className="px-5 py-3">Equipment</th>
+                                    {isManager && (
+                                        <th className="px-5 py-3">Requester</th>
+                                    )}
+                                    <th className="px-5 py-3">Priority</th>
+                                    <th className="px-5 py-3">Status</th>
+                                    <th className="px-5 py-3">Created</th>
+                                    {isManager && (
+                                        <th className="px-5 py-3">Actions</th>
+                                    )}
+                                </tr>
+                                </thead>
 
-                            const resourceId =
-                                resource.id ?? item.resourceId ?? item.equipmentId;
+                                <tbody className="divide-y divide-slate-100">
+                                {visibleRequests.map((item) => {
+                                    const status = getStatus(item);
+                                    const pending = [
+                                        "PENDING",
+                                        "REQUESTED",
+                                    ].includes(status);
 
-                            const resourceName =
-                                resource.name ??
-                                resource.resourceName ??
-                                resource.title ??
-                                (resourceId != null
-                                    ? `Equipment #${resourceId}`
-                                    : "Equipment details unavailable");
+                                    return (
+                                        <tr key={item.id} className="hover:bg-slate-50">
+                                            <td className="px-5 py-4">
+                                                <div className="font-semibold text-slate-900">
+                                                    {item.title || `Request #${item.id}`}
+                                                </div>
+                                                <div className="mt-1 max-w-xs truncate text-xs text-slate-500">
+                                                    {item.description || "No description"}
+                                                </div>
+                                                <div className="mt-1 text-xs text-slate-400">
+                                                    ID: #{item.id}
+                                                </div>
+                                            </td>
 
-                            const values = statusForms[id] ?? {};
+                                            <td className="px-5 py-4 font-medium text-slate-700">
+                                                {getResourceName(item)}
+                                            </td>
 
-                            return (
-                                <article
-                                    key={id ?? `${item.description}-${resourceId}`}
-                                    className="maintenance-card rounded-2xl border border-slate-200 p-5 transition hover:border-blue-200"
-                                >
-                                    <div className="maintenance-card-top flex flex-wrap items-start justify-between gap-3">
-                                        <div>
-                                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                                Request #{id ?? "N/A"}
-                                            </p>
-
-                                            <h3 className="mt-1 font-bold text-slate-900">
-                                                {resourceName}
-                                            </h3>
-
-                                            {resourceId != null && (
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    Equipment ID: {resourceId}
-                                                </p>
+                                            {isManager && (
+                                                <td className="px-5 py-4 text-slate-600">
+                                                    {getRequesterName(item)}
+                                                </td>
                                             )}
-                                        </div>
 
-                                        <span className={`maintenance-status ${statusClass(status)}`}>
-                        {status.replaceAll("_", " ")}
-                      </span>
-                                    </div>
+                                            <td className="px-5 py-4">
+                                                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getPriorityStyle(item.priority)}`}>
+                                                        {item.priority || "—"}
+                                                    </span>
+                                            </td>
 
-                                    <div className="mt-4 rounded-xl bg-slate-50 p-3">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                            Description
-                                        </p>
+                                            <td className="px-5 py-4">
+                                                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(status)}`}>
+                                                        {status.replaceAll("_", " ")}
+                                                    </span>
+                                            </td>
 
-                                        <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">
-                                            {item.description || "No description provided"}
-                                        </p>
-                                    </div>
+                                            <td className="px-5 py-4 text-xs text-slate-500">
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <CalendarDays size={14} />
+                                                        {formatDate(item.createdAt)}
+                                                    </span>
+                                            </td>
 
-                                    <div className="maintenance-details mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                        <div className="flex items-start gap-2 text-sm text-slate-600">
-                                            <CalendarDays
-                                                size={17}
-                                                className="mt-0.5 shrink-0 text-slate-400"
-                                            />
+                                            {isManager && (
+                                                <td className="px-5 py-4">
+                                                    {pending ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openReview(item, "approve")}
+                                                                className="rounded-lg bg-green-50 p-2 text-green-700 hover:bg-green-100"
+                                                                title="Approve request"
+                                                            >
+                                                                <Check size={17} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openReview(item, "reject")}
+                                                                className="rounded-lg bg-red-50 p-2 text-red-700 hover:bg-red-100"
+                                                                title="Reject request"
+                                                            >
+                                                                <X size={17} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400">
+                                                                Reviewed
+                                                            </span>
+                                                    )}
+                                                </td>
+                                            )}
+                                        </tr>
+                                    );
+                                })}
+                                </tbody>
+                            </table>
+                        </div>
 
-                                            <div>
-                                                <p className="maintenance-detail-label">Start</p>
-                                                <p className="maintenance-detail-value">
-                                                    {formatDate(item.scheduledStart)}
-                                                </p>
-                                            </div>
-                                        </div>
+                        <div className="flex flex-col justify-between gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center">
+                            <span className="text-xs text-slate-500">
+                                Page {page} of {totalPages}
+                            </span>
 
-                                        <div className="flex items-start gap-2 text-sm text-slate-600">
-                                            <Clock
-                                                size={17}
-                                                className="mt-0.5 shrink-0 text-slate-400"
-                                            />
-
-                                            <div>
-                                                <p className="maintenance-detail-label">End</p>
-                                                <p className="maintenance-detail-value">
-                                                    {formatDate(item.scheduledEnd)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {item.resolutionNotes && (
-                                        <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-3">
-                                            <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
-                                                Resolution Notes
-                                            </p>
-
-                                            <p className="mt-1 whitespace-pre-wrap text-sm text-green-900">
-                                                {item.resolutionNotes}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {canUpdateStatus && id != null && (
-                                        <div className="mt-5 border-t border-slate-100 pt-4">
-                                            <p className="mb-3 text-sm font-semibold text-slate-800">
-                                                Update Status
-                                            </p>
-
-                                            <div className="space-y-3">
-                                                <div className="maintenance-form-group">
-                                                    <label htmlFor={`maintenance-status-${id}`}>
-                                                        Status value
-                                                    </label>
-
-                                                    <input
-                                                        id={`maintenance-status-${id}`}
-                                                        value={values.status ?? ""}
-                                                        onChange={(event) =>
-                                                            updateStatusForm(
-                                                                id,
-                                                                "status",
-                                                                event.target.value.toUpperCase()
-                                                            )
-                                                        }
-                                                        placeholder={`Current: ${status}`}
-                                                    />
-
-                                                    <p className="text-xs text-slate-400">
-                                                        Backend ke allowed status value ka exact naam enter karein.
-                                                    </p>
-                                                </div>
-
-                                                <div className="maintenance-form-group">
-                                                    <label htmlFor={`maintenance-notes-${id}`}>
-                                                        Resolution Notes
-                                                    </label>
-
-                                                    <textarea
-                                                        id={`maintenance-notes-${id}`}
-                                                        rows={2}
-                                                        value={values.resolutionNotes ?? ""}
-                                                        onChange={(event) =>
-                                                            updateStatusForm(
-                                                                id,
-                                                                "resolutionNotes",
-                                                                event.target.value
-                                                            )
-                                                        }
-                                                        placeholder="Work performed / resolution details"
-                                                    />
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleStatusUpdate(item)}
-                                                    disabled={updatingId === id}
-                                                    className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
-                                                >
-                                                    {updatingId === id
-                                                        ? "Updating..."
-                                                        : "Save Status & Notes"}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </article>
-                            );
-                        })}
-                    </div>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((value) => Math.max(1, value - 1))}
+                                    disabled={page <= 1}
+                                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-40"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                                    disabled={page >= totalPages}
+                                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-40"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    </>
                 )}
             </section>
-            </div>
+
+            {reviewItem && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+                    <form
+                        onSubmit={submitReview}
+                        className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-900">
+                                    {reviewAction === "approve"
+                                        ? "Approve Maintenance Request"
+                                        : "Reject Maintenance Request"}
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Request #{reviewItem.id} — {getResourceName(reviewItem)}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setReviewItem(null)}
+                                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                                aria-label="Close dialog"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <label className="mt-5 block">
+                            <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                                Review remarks *
+                            </span>
+                            <textarea
+                                value={remarks}
+                                onChange={(event) => setRemarks(event.target.value)}
+                                rows={4}
+                                maxLength={500}
+                                required
+                                placeholder="Enter the reason or review remarks..."
+                                className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm outline-none focus:border-blue-500"
+                            />
+                        </label>
+
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setReviewItem(null)}
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={actionId === reviewItem.id}
+                                className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 ${
+                                    reviewAction === "approve"
+                                        ? "bg-green-600 hover:bg-green-700"
+                                        : "bg-red-600 hover:bg-red-700"
+                                }`}
+                            >
+                                {actionId === reviewItem.id
+                                    ? "Saving..."
+                                    : reviewAction === "approve"
+                                        ? "Confirm Approval"
+                                        : "Confirm Rejection"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 }

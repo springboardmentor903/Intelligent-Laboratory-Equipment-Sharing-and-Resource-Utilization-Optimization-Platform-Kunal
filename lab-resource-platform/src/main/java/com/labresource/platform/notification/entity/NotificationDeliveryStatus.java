@@ -1,4 +1,9 @@
+
 package com.labresource.platform.notification.entity;
 
-public class NotificationDeliveryStatus {
+public enum NotificationDeliveryStatus {
+    PENDING,
+    SENT,
+    FAILED,
+    SKIPPED
 }

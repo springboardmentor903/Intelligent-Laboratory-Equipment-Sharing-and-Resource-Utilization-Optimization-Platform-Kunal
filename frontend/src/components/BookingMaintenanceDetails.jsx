@@ -1,4 +1,4 @@
-import './BookingMaintenanceDetails.css'
+import '../styles/BookingMaintenanceDetails.css'
 import { useEffect, useState } from 'react'
 import { AlertCircle, Clock3, RefreshCw, X } from 'lucide-react'
 import api from '../api/client'
@@ -84,7 +84,7 @@ export default function BookingMaintenanceDetails({ booking, onClose }) {
                         </div>
 
                         <p className="bmd-style-09">
-                            **Reason:** {booking?.statusRemark || 'No cancellation reason provided.'}
+                            <strong>Reason:</strong> {booking?.statusRemark || 'No cancellation reason provided.'}
                         </p>
                     </div>
                 )}
@@ -145,7 +145,7 @@ export default function BookingMaintenanceDetails({ booking, onClose }) {
                                 key={item.id}
                                 className="bmd-style-25"
                             >
-                <span className="bmd-style-26" />
+                                <span className="bmd-style-26" />
 
                                 <div className="bmd-style-27">
                                     {item.oldStatus || 'CREATED'} → {item.newStatus || '—'}

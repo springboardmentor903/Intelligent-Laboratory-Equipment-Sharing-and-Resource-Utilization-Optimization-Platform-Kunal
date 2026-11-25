@@ -33,6 +33,7 @@ export default function Profile() {
 
   const [form, setForm] = useState({
     fullName: user?.fullName || user?.name || '',
+    phone: user?.phone || '',
     institutionId: '',
     departmentId: '',
   });
@@ -125,6 +126,7 @@ export default function Profile() {
 
         setForm({
           fullName: profile.fullName || '',
+          phone: profile.phone || '',
           institutionId: selectedInstitutionId,
           departmentId: selectedDepartmentId,
         });
@@ -244,8 +246,17 @@ export default function Profile() {
     setSaving(true);
 
     try {
+      const phone = form.phone.trim();
+
+      if (phone && !/^[0-9+()\s-]{7,30}$/.test(phone)) {
+        setError('Valid mobile number enter karo (7–30 characters).');
+        setSaving(false);
+        return;
+      }
+
       const payload = {
         fullName: form.fullName.trim(),
+        phone,
       };
 
       if (form.institutionId && form.departmentId) {
@@ -268,6 +279,7 @@ export default function Profile() {
       setForm((prev) => ({
         ...prev,
         fullName: profile.fullName || prev.fullName,
+        phone: profile.phone || '',
       }));
 
       setEditing(false);
@@ -299,6 +311,11 @@ export default function Profile() {
       label: 'Email address',
       value: email,
       Icon: Mail,
+    },
+    {
+      label: 'Mobile number',
+      value: user?.phone || 'Not provided',
+      Icon: Hash,
     },
     {
       label: 'User ID',
@@ -338,7 +355,7 @@ export default function Profile() {
           <div>
             <span className="eyebrow">ACCOUNT</span>
             <h1>My profile</h1>
-            <p>Manage your personal details and profile photo.</p>
+            <p>Manage your personal details, mobile number and profile photo.</p>
           </div>
 
           {!editing && (
@@ -456,6 +473,27 @@ export default function Profile() {
                     <small className="field-hint">
                       Email change karne ke liye backend support chahiye.
                     </small>
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="profilePhone">Mobile number</label>
+                    <input
+                        id="profilePhone"
+                        className="standalone-input"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        maxLength={30}
+                        placeholder="Enter mobile number"
+                        value={form.phone}
+                        onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              phone: e.target.value,
+                            }))
+                        }
+                    />
+                    <small className="field-hint">Mobile number database mein update hoga.</small>
                   </div>
 
                   <div className="field">

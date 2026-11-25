@@ -1,4 +1,10 @@
+
 package com.labresource.platform.maintenance.enums;
 
-public class WorkOrderStatus {
+public enum WorkOrderStatus {
+    OPEN,
+    ASSIGNED,
+    IN_PROGRESS,
+    COMPLETED,
+    CANCELLED
 }

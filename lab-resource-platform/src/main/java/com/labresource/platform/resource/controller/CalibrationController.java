@@ -13,11 +13,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/resources/{resourceId}/calibrations")
 public class CalibrationController {
+
+    private static final int DUE_SOON_DAYS = 30;
 
     private final CalibrationRecordRepository calibrationRepository;
     private final ResourceRepository resourceRepository;
@@ -42,6 +45,7 @@ public class CalibrationController {
             Long resourceId,
             LocalDate calibrationDate,
             LocalDate nextDueDate,
+            Long daysUntilDue,
             String certificateNumber,
             String certifiedBy,
             String status,
@@ -80,10 +84,6 @@ public class CalibrationController {
         record.setCertificateNumber(request.certificateNumber());
         record.setCertifiedBy(request.certifiedBy());
         record.setRemarks(request.remarks());
-        record.setStatus(
-                request.nextDueDate().isBefore(LocalDate.now())
-                        ? "OVERDUE" : "VALID"
-        );
 
         return toResponse(calibrationRepository.save(record));
     }
@@ -91,40 +91,60 @@ public class CalibrationController {
     private Resource getResource(Long resourceId) {
         return resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Resource not found"));
+                        HttpStatus.NOT_FOUND,
+                        "Resource not found"
+                ));
     }
 
     private void validate(CalibrationRequest request) {
+
         if (request == null
                 || request.calibrationDate() == null
                 || request.nextDueDate() == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Calibration date and next due date are required");
+                    "Calibration date and next due date are required"
+            );
         }
 
         if (request.nextDueDate().isBefore(request.calibrationDate())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Next due date cannot be before calibration date");
+                    "Next due date cannot be before calibration date"
+            );
         }
 
         if (request.calibrationDate().isAfter(LocalDate.now())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Calibration date cannot be in the future");
+                    "Calibration date cannot be in the future"
+            );
         }
     }
 
     private CalibrationResponse toResponse(CalibrationRecord record) {
-        String status = record.getNextDueDate().isBefore(LocalDate.now())
-                ? "OVERDUE" : "VALID";
+
+        LocalDate today = LocalDate.now();
+        LocalDate dueDate = record.getNextDueDate();
+
+        long daysUntilDue = ChronoUnit.DAYS.between(today, dueDate);
+
+        String status;
+
+        if (dueDate.isBefore(today)) {
+            status = "EXPIRED";
+        } else if (daysUntilDue <= DUE_SOON_DAYS) {
+            status = "DUE_SOON";
+        } else {
+            status = "VALID";
+        }
 
         return new CalibrationResponse(
                 record.getId(),
                 record.getResource().getId(),
                 record.getCalibrationDate(),
-                record.getNextDueDate(),
+                dueDate,
+                daysUntilDue,
                 record.getCertificateNumber(),
                 record.getCertifiedBy(),
                 status,

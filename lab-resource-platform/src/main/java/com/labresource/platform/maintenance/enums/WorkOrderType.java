@@ -1,4 +1,8 @@
+
 package com.labresource.platform.maintenance.enums;
 
-public class WorkOrderType {
+public enum WorkOrderType {
+    PREVENTIVE,
+    CORRECTIVE,
+    CALIBRATION
 }

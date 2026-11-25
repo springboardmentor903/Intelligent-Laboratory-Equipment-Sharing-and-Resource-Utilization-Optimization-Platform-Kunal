@@ -1,6 +1,7 @@
 
 package com.labresource.platform.sharing.service;
 
+import com.labresource.platform.notification.service.NotificationService;
 import com.labresource.platform.resource.entity.Resource;
 import com.labresource.platform.resource.repository.ResourceRepository;
 import com.labresource.platform.sharing.entity.ResourceShare;
@@ -21,15 +22,18 @@ public class ResourceShareService {
     private final ResourceShareRepository shareRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public ResourceShareService(
             ResourceShareRepository shareRepository,
             ResourceRepository resourceRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            NotificationService notificationService) {
 
         this.shareRepository = shareRepository;
         this.resourceRepository = resourceRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     private User getUser(String email) {
@@ -116,7 +120,6 @@ public class ResourceShareService {
                 institutionId);
     }
 
-    // T6: Create sharing listing with hourly fee
     @Transactional
     public ResourceShare createShare(
             Long resourceId,
@@ -202,7 +205,104 @@ public class ResourceShareService {
         share.setRemarks(remarks);
         share.setStatus(ResourceShare.PENDING);
 
-        return shareRepository.save(share);
+        ResourceShare savedShare = shareRepository.save(share);
+
+        notificationService.createNotification(
+                recipient.getId(),
+                "New Resource Sharing Request",
+                "A resource sharing request has been submitted for "
+                        + resource.getName()
+                        + ". Please review the request.",
+                "SHARING_REQUEST_SUBMITTED",
+                "SHARING_REQUEST",
+                savedShare.getId()
+        );
+
+        return savedShare;
+    }
+
+    /**
+     * Forward a pending request to another authorized user in the receiving
+     * institution. The request remains pending; only its assigned reviewer changes.
+     */
+    @Transactional
+    public ResourceShare forwardRequest(
+            Long id,
+            Long targetUserId,
+            String remarks,
+            String email) {
+
+        User forwarder = getUser(email);
+        validateManager(forwarder);
+
+        ResourceShare share = shareRepository.findByIdWithResource(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Sharing request not found"));
+
+        Long receivingInstitutionId = getInstitutionId(forwarder);
+
+        if (!receivingInstitutionId.equals(
+                share.getSharedWithInstitutionId())) {
+            throw new IllegalArgumentException(
+                    "Only the receiving institution can forward this request");
+        }
+
+        if (!ResourceShare.PENDING.equals(share.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Only pending sharing requests can be forwarded");
+        }
+
+        if (targetUserId == null) {
+            throw new IllegalArgumentException("Target user is required");
+        }
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Forward target user not found"));
+
+        if (!Boolean.TRUE.equals(target.getIsActive())
+                || target.getInstitution() == null
+                || !receivingInstitutionId.equals(
+                target.getInstitution().getId())) {
+            throw new IllegalArgumentException(
+                    "Forward target must be an active user in your institution");
+        }
+
+        if (target.getRole() == null
+                || target.getRole().getName() == null
+                || !List.of(
+                "INSTITUTION_ADMIN",
+                "LAB_MANAGER"
+        ).contains(target.getRole().getName())) {
+            throw new IllegalArgumentException(
+                    "Forward target must be an Institution Admin or Lab Manager");
+        }
+
+        if (target.getId().equals(forwarder.getId())) {
+            throw new IllegalArgumentException(
+                    "You cannot forward a request to yourself");
+        }
+
+        share.setSharedWithUserId(target.getId());
+
+        if (remarks != null && !remarks.isBlank()) {
+            share.setDecisionRemarks(remarks.trim());
+        }
+
+        ResourceShare savedShare = shareRepository.save(share);
+
+        notificationService.createNotification(
+                target.getId(),
+                "Sharing Request Forwarded to You",
+                "A resource sharing request for "
+                        + share.getResource().getName()
+                        + " has been forwarded to you for review.",
+                "SHARING_REQUEST_FORWARDED",
+                "SHARING_REQUEST",
+                savedShare.getId()
+        );
+
+        return savedShare;
     }
 
     @Transactional
@@ -264,6 +364,90 @@ public class ResourceShareService {
         share.setApprovedByUserId(reviewer.getId());
         share.setDecidedAt(LocalDateTime.now());
 
-        return shareRepository.save(share);
+        ResourceShare savedShare = shareRepository.save(share);
+
+        String resourceName = share.getResource().getName();
+
+        if (ResourceShare.APPROVED.equals(newStatus)) {
+            notificationService.createNotification(
+                    share.getSharedByUserId(),
+                    "Sharing Request Approved",
+                    "Your sharing request for "
+                            + resourceName
+                            + " has been approved.",
+                    "SHARING_REQUEST_APPROVED",
+                    "SHARING_REQUEST",
+                    savedShare.getId()
+            );
+        } else if (ResourceShare.REJECTED.equals(newStatus)) {
+            notificationService.createNotification(
+                    share.getSharedByUserId(),
+                    "Sharing Request Rejected",
+                    "Your sharing request for "
+                            + resourceName
+                            + " has been rejected."
+                            + (decisionRemarks == null
+                            || decisionRemarks.isBlank()
+                            ? ""
+                            : " Reason: " + decisionRemarks),
+                    "SHARING_REQUEST_REJECTED",
+                    "SHARING_REQUEST",
+                    savedShare.getId()
+            );
+        }
+
+        return savedShare;
+    }
+
+    @Transactional
+    public ResourceShare revokeShare(
+            Long id,
+            String remarks,
+            String email) {
+
+        User requester = getUser(email);
+        validateManager(requester);
+
+        Long institutionId = getInstitutionId(requester);
+
+        ResourceShare share = shareRepository
+                .findByIdWithResource(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Sharing request not found"));
+
+        if (!institutionId.equals(
+                share.getSharedByInstitutionId())) {
+            throw new IllegalArgumentException(
+                    "Only the resource-owning institution can revoke this share");
+        }
+
+        if (!ResourceShare.APPROVED.equals(share.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Only approved sharing agreements can be revoked");
+        }
+
+        share.setStatus(ResourceShare.CANCELLED);
+        share.setDecisionRemarks(remarks);
+        share.setApprovedByUserId(requester.getId());
+        share.setDecidedAt(LocalDateTime.now());
+
+        ResourceShare savedShare = shareRepository.save(share);
+
+        notificationService.createNotification(
+                share.getSharedWithUserId(),
+                "Resource Sharing Revoked",
+                "Access to the shared resource "
+                        + share.getResource().getName()
+                        + " has been revoked by the owning institution."
+                        + (remarks == null || remarks.isBlank()
+                        ? ""
+                        : " Reason: " + remarks),
+                "SHARING_ACCESS_REVOKED",
+                "AGREEMENT",
+                savedShare.getId()
+        );
+
+        return savedShare;
     }
 }

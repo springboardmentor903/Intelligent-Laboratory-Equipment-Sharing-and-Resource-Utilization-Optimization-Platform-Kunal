@@ -1,0 +1,659 @@
+
+/* =========================================
+   T10 - COST AND BILLING MODULE
+   Complete Stylesheet
+========================================= */
+
+/* ---------- Base Layout ---------- */
+
+.t10-page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    width: 100%;
+    min-width: 0;
+    color: #172033;
+    box-sizing: border-box;
+}
+
+.t10-page *,
+.t10-page *::before,
+.t10-page *::after {
+    box-sizing: border-box;
+}
+
+/* ---------- Page Header ---------- */
+
+.t10-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.t10-header h1 {
+    font-size: 26px;
+    line-height: 1.3;
+    margin: 0 0 6px;
+    font-weight: 750;
+    color: #172033;
+}
+
+.t10-header p {
+    margin: 0;
+    color: #718096;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ---------- Buttons ---------- */
+
+.t10-btn {
+    border: 0;
+    border-radius: 9px;
+    padding: 10px 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 650;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.t10-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.t10-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.t10-btn.primary {
+    background: #245fbd;
+    color: #fff;
+}
+
+.t10-btn.primary:hover:not(:disabled) {
+    background: #194d9d;
+}
+
+.t10-btn.secondary {
+    background: #eef2f7;
+    color: #344054;
+}
+
+.t10-btn.secondary:hover:not(:disabled) {
+    background: #e1e7ef;
+}
+
+.t10-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.t10-icon-btn {
+    border: 0;
+    background: #eef2f7;
+    color: #344054;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.t10-icon-btn:hover {
+    background: #e1e7ef;
+}
+
+/* ---------- Statistics Cards ---------- */
+
+.t10-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+}
+
+.t10-stat-card {
+    background: #fff;
+    border: 1px solid #e7ebf1;
+    border-radius: 13px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+}
+
+.t10-stat-card span {
+    font-size: 13px;
+    color: #738096;
+}
+
+.t10-stat-card strong {
+    font-size: 23px;
+    letter-spacing: -0.4px;
+    color: #172033;
+    overflow-wrap: anywhere;
+}
+
+.t10-stat-card small {
+    color: #8993a4;
+    font-size: 11px;
+}
+
+.t10-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #edf4ff;
+    color: #2865bb;
+    display: grid;
+    place-items: center;
+}
+
+/* ---------- Main Panel ---------- */
+
+.t10-panel {
+    background: #fff;
+    border: 1px solid #e7ebf1;
+    border-radius: 14px;
+    padding: 20px;
+    min-width: 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+}
+
+.t10-panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.t10-panel-heading h2,
+.t10-chart-panel h2 {
+    font-size: 17px;
+    margin: 0 0 5px;
+    color: #172033;
+}
+
+.t10-panel-heading p {
+    font-size: 13px;
+    color: #758196;
+    margin: 0;
+}
+
+/* ---------- Filters ---------- */
+
+.t10-filters {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 14px 0 20px;
+}
+
+.t10-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: #697586;
+    font-weight: 600;
+}
+
+.t10-filters input,
+.t10-filters select,
+.t10-filters > select {
+    border: 1px solid #dce2eb;
+    border-radius: 8px;
+    padding: 10px 11px;
+    background: #fff;
+    color: #273449;
+    min-height: 39px;
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.t10-filters input:focus,
+.t10-filters select:focus {
+    border-color: #3976c8;
+    box-shadow: 0 0 0 3px rgba(57, 118, 200, 0.1);
+}
+
+.t10-filters select {
+    min-width: 145px;
+}
+
+/* ---------- Tables ---------- */
+
+.t10-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 9px;
+}
+
+.t10-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+    font-size: 13px;
+}
+
+.t10-table th {
+    text-align: left;
+    padding: 12px 13px;
+    background: #f7f9fc;
+    color: #697586;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.45px;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.t10-table td {
+    padding: 14px 13px;
+    border-bottom: 1px solid #edf0f4;
+    color: #344054;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.t10-table td strong {
+    color: #172033;
+}
+
+.t10-table tbody tr:hover {
+    background: #fafcff;
+}
+
+.t10-empty {
+    text-align: center !important;
+    padding: 30px !important;
+    color: #8a94a6 !important;
+}
+
+/* ---------- Pagination ---------- */
+
+.t10-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    color: #738096;
+    font-size: 13px;
+}
+
+.t10-pagination > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ---------- Charge Type Badges ---------- */
+
+.t10-type,
+.t10-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #eef2f7;
+    color: #475467;
+    white-space: nowrap;
+}
+
+.t10-type.internal {
+    background: #eaf2ff;
+    color: #245fbd;
+}
+
+.t10-type.external {
+    background: #e8f7f1;
+    color: #087c59;
+}
+
+.t10-type.unassigned {
+    background: #fff3df;
+    color: #a15c07;
+}
+
+/* ---------- Status Badges ---------- */
+
+.t10-status.pending,
+.t10-status.draft {
+    background: #fff3df;
+    color: #a15c07;
+}
+
+.t10-status.invoiced,
+.t10-status.issued {
+    background: #eaf2ff;
+    color: #245fbd;
+}
+
+.t10-status.paid,
+.t10-status.ok {
+    background: #e8f7f1;
+    color: #087c59;
+}
+
+.t10-status.cancelled,
+.t10-status.overdue,
+.t10-status.exceeded {
+    background: #fff1f0;
+    color: #b42318;
+}
+
+.t10-status.warning {
+    background: #fff3df;
+    color: #a15c07;
+}
+
+.t10-status.no-budget {
+    background: #eef2f7;
+    color: #667085;
+}
+
+/* ---------- Tabs ---------- */
+
+.t10-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #e5eaf1;
+    overflow-x: auto;
+}
+
+.t10-tabs button {
+    border: 0;
+    background: transparent;
+    padding: 12px 17px;
+    color: #758196;
+    font-weight: 650;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.t10-tabs button:hover {
+    color: #245fbd;
+}
+
+.t10-tabs button.active {
+    color: #245fbd;
+    border-bottom-color: #245fbd;
+}
+
+/* ---------- Chart ---------- */
+
+.t10-chart-panel {
+    margin: 24px 0 20px;
+    min-width: 0;
+}
+
+.t10-chart {
+    width: 100%;
+    height: 340px;
+    margin-top: 12px;
+}
+
+/* ---------- Error Message ---------- */
+
+.t10-error {
+    padding: 12px 14px;
+    border-radius: 9px;
+    background: #fff1f0;
+    color: #b42318;
+    font-size: 13px;
+    margin: 12px 0;
+    border: 1px solid #ffd8d5;
+}
+
+/* ---------- Form Panel ---------- */
+
+.t10-form-panel {
+    background: #f9fbfe;
+    border: 1px solid #e3e9f1;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 18px 0;
+}
+
+.t10-form-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.t10-form-heading h2 {
+    font-size: 17px;
+    margin: 0;
+    color: #172033;
+}
+
+.t10-form-heading p {
+    font-size: 13px;
+    color: #758196;
+    margin: 5px 0 0;
+}
+
+.t10-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.t10-form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #697586;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.t10-form-grid input,
+.t10-form-grid select {
+    border: 1px solid #dce2eb;
+    border-radius: 8px;
+    padding: 10px 11px;
+    min-height: 39px;
+    background: #fff;
+    color: #273449;
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.t10-form-grid input:focus,
+.t10-form-grid select:focus {
+    border-color: #3976c8;
+    box-shadow: 0 0 0 3px rgba(57, 118, 200, 0.1);
+}
+
+/* ---------- Invoice Modal ---------- */
+
+.t10-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.t10-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px;
+    width: min(760px, 100%);
+    max-height: 85vh;
+    overflow: auto;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.2);
+}
+
+.t10-modal h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #172033;
+}
+
+.t10-modal h3 {
+    font-size: 15px;
+    margin: 20px 0 10px;
+    color: #172033;
+}
+
+.t10-invoice-totals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.t10-invoice-totals > div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 13px;
+    background: #f7f9fc;
+    border-radius: 9px;
+    border: 1px solid #edf0f4;
+}
+
+.t10-invoice-totals span,
+.t10-muted {
+    font-size: 12px;
+    color: #758196;
+}
+
+.t10-invoice-totals strong {
+    font-size: 16px;
+    color: #172033;
+}
+
+.t10-muted {
+    margin: 8px 0;
+}
+
+/* ---------- Financial Summary ---------- */
+
+.t10-section-title {
+    font-size: 17px;
+    margin: 24px 0 0;
+    color: #172033;
+}
+
+/* ---------- Budget Page ---------- */
+
+.t10-page .t10-status {
+    min-width: 75px;
+}
+
+/* ---------- Responsive Layout ---------- */
+
+@media (max-width: 900px) {
+    .t10-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .t10-panel {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 700px) {
+    .t10-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .t10-header h1 {
+        font-size: 23px;
+    }
+
+    .t10-panel {
+        padding: 14px;
+    }
+
+    .t10-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .t10-filters label,
+    .t10-filters input,
+    .t10-filters select,
+    .t10-filters > select {
+        width: 100%;
+    }
+
+    .t10-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .t10-pagination > div {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .t10-chart {
+        height: 300px;
+    }
+
+    .t10-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .t10-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .t10-invoice-totals {
+        grid-template-columns: 1fr;
+    }
+
+    .t10-modal {
+        padding: 16px;
+        max-height: 90vh;
+    }
+
+    .t10-actions {
+        width: 100%;
+    }
+
+    .t10-actions .t10-btn {
+        flex: 1;
+    }
+
+    .t10-tabs button {
+        padding: 11px 13px;
+    }
+}

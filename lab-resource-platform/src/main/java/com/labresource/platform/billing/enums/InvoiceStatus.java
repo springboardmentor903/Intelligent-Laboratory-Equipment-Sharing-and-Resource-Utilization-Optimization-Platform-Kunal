@@ -1,4 +1,9 @@
+
 package com.labresource.platform.billing.enums;
 
-public class InvoiceStatus {
+public enum InvoiceStatus {
+    DRAFT,
+    ISSUED,
+    PAID,
+    CANCELLED
 }

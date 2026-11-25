@@ -1,4 +1,10 @@
+
 package com.labresource.platform.report.preview;
 
-public class ReportPreviewRequest {
+import java.time.LocalDate;
+
+public record ReportPreviewRequest(
+        LocalDate fromDate,
+        LocalDate toDate
+) {
 }

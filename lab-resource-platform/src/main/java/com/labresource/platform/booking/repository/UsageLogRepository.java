@@ -68,4 +68,51 @@ public interface UsageLogRepository
             @Param("scopeType") String scopeType,
             @Param("scopeId") Long scopeId
     );
+
+    @Query(value = """
+        SELECT COALESCE(
+            SUM(
+                EXTRACT(
+                    EPOCH FROM (
+                        COALESCE(ul.actual_end_time, :now)
+                        - ul.actual_start_time
+                    )
+                )
+            ), 0
+        )
+        FROM usage_logs ul
+        WHERE ul.user_id = :userId
+          AND ul.actual_start_time >= :fromDate
+          AND ul.actual_start_time <= :now
+        """, nativeQuery = true)
+    Long sumUserActualUsageSeconds(
+            @Param("userId") Long userId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("now") LocalDateTime now
+    );
+    @Query(value = """
+        SELECT
+            ul.resource_id,
+            COALESCE(
+                SUM(
+                    EXTRACT(
+                        EPOCH FROM (
+                            COALESCE(ul.actual_end_time, :now)
+                            - ul.actual_start_time
+                        )
+                    ) / 3600.0
+                ), 0
+            )
+        FROM usage_logs ul
+        JOIN resources r ON r.id = ul.resource_id
+        WHERE r.institution_id = :institutionId
+          AND ul.actual_start_time >= :fromDate
+          AND ul.actual_start_time <= :now
+        GROUP BY ul.resource_id
+        """, nativeQuery = true)
+    List<Object[]> findInstitutionRecentUsageHours(
+            @Param("institutionId") Long institutionId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("now") LocalDateTime now
+    );
 }

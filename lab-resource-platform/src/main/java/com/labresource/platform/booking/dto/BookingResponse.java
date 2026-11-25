@@ -24,10 +24,17 @@ public class BookingResponse {
     private String statusRemark;
 
     public BookingResponse(Booking booking) {
+
         this.id = booking.getId();
-        this.userId = booking.getUser().getId();
-        this.resourceId = booking.getResource().getId();
-        this.resourceName = booking.getResource().getName();
+
+        this.userId = booking.getUser() != null
+                ? booking.getUser().getId()
+                : null;
+
+        if (booking.getResource() != null) {
+            this.resourceId = booking.getResource().getId();
+            this.resourceName = booking.getResource().getName();
+        }
 
         this.startTime = booking.getStartTime();
         this.endTime = booking.getEndTime();

@@ -51,7 +51,6 @@ public class ResourceShareController {
                 authentication.getName());
     }
 
-    // Create sharing request with hourly fee
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
@@ -70,6 +69,23 @@ public class ResourceShareController {
                 request.remarks(),
                 authentication.getName()
         );
+    }
+
+    @PutMapping("/{id}/forward")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ResourceShare> forwardRequest(
+            @PathVariable Long id,
+            @RequestBody ForwardRequest request,
+            Authentication authentication) {
+
+        ResourceShare updated = shareService.forwardRequest(
+                id,
+                request.targetUserId(),
+                request.remarks(),
+                authentication.getName()
+        );
+
+        return ResponseEntity.ok(updated);
     }
 
     @PutMapping("/{id}/approve")
@@ -108,6 +124,24 @@ public class ResourceShareController {
         return ResponseEntity.ok(updated);
     }
 
+    @PutMapping("/{id}/revoke")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ResourceShare> revokeShare(
+            @PathVariable Long id,
+            @RequestBody(required = false) DecisionRequest request,
+            Authentication authentication) {
+
+        String remarks = request == null ? null : request.remarks();
+
+        ResourceShare updated = shareService.revokeShare(
+                id,
+                remarks,
+                authentication.getName()
+        );
+
+        return ResponseEntity.ok(updated);
+    }
+
     public record ShareRequest(
             Long resourceId,
             Long targetInstitutionId,
@@ -119,5 +153,8 @@ public class ResourceShareController {
     }
 
     public record DecisionRequest(String remarks) {
+    }
+
+    public record ForwardRequest(Long targetUserId, String remarks) {
     }
 }

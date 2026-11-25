@@ -1,9 +1,9 @@
-
 import Maintenance from "./pages/Maintenance";
 import ResourceSharing from './pages/ResourceSharing';
 import SharingAnalytics from './pages/SharingAnalytics';
 import {
     BrowserRouter,
+    Link,
     Navigate,
     NavLink,
     Route,
@@ -29,17 +29,27 @@ import {
     Wrench,
     ClipboardCheck,
     Building2,
-    Landmark,
-    ShieldCheck,
     Users,
     BarChart3,
     Activity,
+    History,
+    Wallet,
+    ReceiptText,
 } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 
+import CalibrationOverview from './pages/t9/CalibrationOverview';
+import CalibrationReminders from './pages/t9/CalibrationReminders';
+import MyTasks from './pages/t9/MyTasks';
+import Technicians from './pages/t9/Technicians';
+import MaintenanceOverview from './pages/MaintenanceOverview';
+import MaintenanceHistory from './pages/MaintenanceHistory';
+import MaintenanceSchedules from './pages/MaintenanceSchedules';
+import MaintenanceRequests from './pages/MaintenanceRequests';
+import WorkOrders from "./pages/WorkOrders";
 import LiveEquipmentStatus from './pages/LiveEquipmentStatus';
-import ResourceUtilizationReport from './pages/ResourceUtilizationReport';
+import Reports from './pages/Reports';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Equipment from './pages/Equipment';
@@ -47,9 +57,30 @@ import Bookings from './pages/Bookings';
 import Profile from './pages/Profile';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import api from './api/client';
+import RoleDashboardContent from './RoleDashboard';
+import InstitutionAdminDashboard from './pages/InstitutionAdminDashboard';
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from './pages/ResetPassword';
 import OAuthCallback from './pages/OAuthCallback';
+import { MyUsageCharges, CostOverview } from './pages/t10';
+import Budgets from './pages/t10/Budgets';
+import Invoices from './pages/t10/Invoices';
+import FinancialSummary from './pages/t10/FinancialSummary';
+
+// T13 Notifications
+import NotificationBell from './components/notifications/NotificationBell';
+import Notifications from './pages/notifications/Notifications';
+import NotificationPreferences from './pages/notifications/NotificationPreferences';
+import {
+    connectNotificationSocket,
+    disconnectNotificationSocket,
+} from './services/notificationSocket';
+import {
+    listenForForegroundMessages,
+    disableWebPush,
+} from './services/firebaseMessaging';
+
+import './styles/notifications.css';
 import './App.css';
 
 function getRoleKey(user) {
@@ -96,68 +127,106 @@ const STAFF_ROLES = [
 const roleNavigation = {
     RESEARCHER_STUDENT: [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { to: '/my-usage-charges', label: 'My Usage Charges', icon: Wallet },
         { to: '/equipment', label: 'Equipment', icon: Microscope },
         { to: '/bookings', label: 'My Bookings', icon: CalendarDays },
+        { to: '/maintenance', label: 'Maintenance', icon: Wrench },
+        { to: '/maintenance-requests', label: 'Maintenance Requests', icon: ClipboardCheck },
         { to: '/profile', label: 'My Profile', icon: UserRound },
     ],
 
     LAB_TECHNICIAN: [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { to: '/my-usage-charges', label: 'My Usage Charges', icon: Wallet },
         { to: '/equipment', label: 'Equipment', icon: Microscope },
         { to: '/bookings', label: 'Booking Operations', icon: ClipboardCheck },
         { to: '/maintenance', label: 'Maintenance', icon: Wrench },
+        { to: '/maintenance-history', label: 'Maintenance History', icon: History },
+        { to: '/maintenance-requests', label: 'Maintenance Requests', icon: ClipboardCheck },
+        { to: '/work-orders', label: 'Work Orders', icon: ClipboardCheck },
+        { to: '/my-tasks', label: 'My Tasks', icon: ClipboardCheck },
         { to: '/profile', label: 'My Profile', icon: UserRound },
         { to: '/live-monitoring', label: 'Live Monitoring', icon: Activity },
     ],
 
     LAB_MANAGER: [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { to: '/my-usage-charges', label: 'My Usage Charges', icon: Wallet },
         { to: '/equipment', label: 'Equipment', icon: Microscope },
         { to: '/bookings', label: 'Booking Approvals', icon: ClipboardCheck },
         { to: '/maintenance', label: 'Maintenance', icon: Wrench },
+        { to: '/maintenance-overview', label: 'Maintenance Overview', icon: BarChart3 },
+        { to: '/maintenance-history', label: 'Maintenance History', icon: History },
+        { to: '/maintenance-requests', label: 'Maintenance Requests', icon: ClipboardCheck },
+        { to: '/maintenance-schedules', label: 'Preventive Maintenance', icon: CalendarDays },
+        { to: '/work-orders', label: 'Work Orders', icon: ClipboardCheck },
+        { to: '/calibration-overview', label: 'Calibration Overview', icon: FlaskConical },
+        { to: '/calibration-reminders', label: 'Calibration Reminders', icon: Bell },
+        { to: '/technicians', label: 'Technician Workload', icon: Users },
         { to: '/profile', label: 'My Profile', icon: UserRound },
         { to: '/live-monitoring', label: 'Live Monitoring', icon: Activity },
-        { to: '/reports', label: 'Utilization Reports', icon: BarChart3 },
+        { to: '/reports', label: 'Reports & Export', icon: BarChart3 },
         { to: '/resource-sharing', label: 'Resource Sharing', icon: Building2 },
         { to: '/sharing-analytics', label: 'Sharing Analytics', icon: BarChart3 },
     ],
 
     DEPARTMENT_HEAD: [
         { to: '/dashboard', label: 'Department Overview', icon: LayoutDashboard },
+        { to: '/my-usage-charges', label: 'My Usage Charges', icon: Wallet },
+        { to: '/budgets', label: 'Department Budgets', icon: ReceiptText },
+        { to: '/invoices', label: 'Department Invoices', icon: ReceiptText },
         { to: '/equipment', label: 'Equipment', icon: Microscope },
         { to: '/bookings', label: 'Booking Access', icon: CalendarDays },
-        { to: '/maintenance', label: 'Maintenance', icon: Wrench },
         { to: '/profile', label: 'My Profile', icon: UserRound },
+        { to: '/maintenance-requests', label: 'Maintenance Requests', icon: ClipboardCheck },
+        { to: '/maintenance-history', label: 'Maintenance History', icon: History },
+        { to: '/maintenance-schedules', label: 'Preventive Maintenance', icon: CalendarDays },
         { to: '/live-monitoring', label: 'Live Monitoring', icon: Activity },
-        { to: '/reports', label: 'Utilization Reports', icon: BarChart3 },
+        { to: '/reports', label: 'Reports & Export', icon: BarChart3 },
         { to: '/sharing-analytics', label: 'Sharing Analytics', icon: BarChart3 },
     ],
 
     INSTITUTION_ADMIN: [
         { to: '/dashboard', label: 'Institution Overview', icon: LayoutDashboard },
+        { to: '/my-usage-charges', label: 'My Usage Charges', icon: Wallet },
+        { to: '/cost-overview', label: 'Cost Overview', icon: BarChart3 },
+        { to: '/budgets', label: 'Department Budgets', icon: ReceiptText },
+        { to: '/invoices', label: 'Invoices', icon: ReceiptText },
+        { to: '/financial-summary', label: 'Financial Summary', icon: BarChart3 },
         { to: '/equipment', label: 'Equipment', icon: Microscope },
         { to: '/bookings', label: 'Booking Access', icon: CalendarDays },
         { to: '/maintenance', label: 'Maintenance', icon: Wrench },
+        { to: '/maintenance-history', label: 'Maintenance History', icon: History },
+        { to: '/calibration-overview', label: 'Calibration Overview', icon: FlaskConical },
+        { to: '/calibration-reminders', label: 'Calibration Reminders', icon: Bell },
+        { to: '/technicians', label: 'Technician Workload', icon: Users },
         { to: '/profile', label: 'My Profile', icon: UserRound },
         { to: '/live-monitoring', label: 'Live Monitoring', icon: Activity },
-        { to: '/reports', label: 'Utilization Reports', icon: BarChart3 },
+        { to: '/reports', label: 'Reports & Export', icon: BarChart3 },
         { to: '/resource-sharing', label: 'Resource Sharing', icon: Building2 },
         { to: '/sharing-analytics', label: 'Sharing Analytics', icon: BarChart3 },
     ],
 
     SYSTEM_ADMIN: [
         { to: '/dashboard', label: 'System Overview', icon: LayoutDashboard },
+        { to: '/my-usage-charges', label: 'My Usage Charges', icon: Wallet },
+        { to: '/cost-overview', label: 'Cost Overview', icon: BarChart3 },
+        { to: '/budgets', label: 'Department Budgets', icon: ReceiptText },
+        { to: '/invoices', label: 'Invoices', icon: ReceiptText },
+        { to: '/financial-summary', label: 'Financial Summary', icon: BarChart3 },
         { to: '/equipment', label: 'Equipment', icon: Microscope },
         { to: '/bookings', label: 'Booking Operations', icon: ClipboardCheck },
+        { to: '/calibration-overview', label: 'Calibration Overview', icon: FlaskConical },
+        { to: '/calibration-reminders', label: 'Calibration Reminders', icon: Bell },
+        { to: '/technicians', label: 'Technician Workload', icon: Users },
         { to: '/maintenance', label: 'Maintenance', icon: Wrench },
         { to: '/profile', label: 'My Profile', icon: UserRound },
         { to: '/live-monitoring', label: 'Live Monitoring', icon: Activity },
-        { to: '/reports', label: 'Utilization Reports', icon: BarChart3 },
+        { to: '/reports', label: 'Reports & Export', icon: BarChart3 },
         { to: '/resource-sharing', label: 'Resource Sharing', icon: Building2 },
         { to: '/sharing-analytics', label: 'Sharing Analytics', icon: BarChart3 },
     ],
 };
-
 
 function ProtectedRoute({ children, allowedRoles }) {
     const { user } = useAuth();
@@ -180,15 +249,122 @@ function ProtectedRoute({ children, allowedRoles }) {
 function DashboardLayout({ children, title, subtitle }) {
     const { user, logout } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const role = getRoleKey(user);
     const name = getDisplayName(user);
+
     const navItems = roleNavigation[role] || [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/profile', label: 'My Profile', icon: UserRound },
     ];
 
+    // T13: Notification WebSocket + polling fallback
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const userId = user?.id ?? user?.userId;
+
+        if (!token || !userId) {
+            disconnectNotificationSocket();
+            setUnreadCount(0);
+            return undefined;
+        }
+
+        let active = true;
+        let unsubscribeForeground = () => {};
+
+        const loadUnreadCount = async () => {
+            try {
+                const response = await api.get('/notifications/unread-count');
+
+                if (!active) return;
+
+                const count =
+                    response.data?.unreadCount ??
+                    response.data?.count ??
+                    0;
+
+                setUnreadCount(Number(count) || 0);
+            } catch (error) {
+                console.warn('Unread count could not be loaded:', error);
+            }
+        };
+
+        loadUnreadCount();
+
+        const pollingId = window.setInterval(loadUnreadCount, 60000);
+
+        try {
+            connectNotificationSocket({
+                token,
+                userId,
+                onUnreadCount: (count) => {
+                    if (active) {
+                        setUnreadCount(Number(count) || 0);
+                    }
+                },
+                onError: (error) => {
+                    console.warn('Notification socket:', error);
+                },
+            });
+        } catch (error) {
+            console.warn('Notification socket unavailable:', error);
+        }
+
+        listenForForegroundMessages((payload) => {
+            if (!active) return;
+
+            const title =
+                payload?.notification?.title || 'Lab Resource Platform';
+
+            const body =
+                payload?.notification?.body || 'You have a new notification.';
+
+            if (
+                'Notification' in window &&
+                Notification.permission === 'granted'
+            ) {
+                new Notification(title, { body });
+            }
+
+            loadUnreadCount();
+        })
+            .then((unsubscribe) => {
+                if (active && typeof unsubscribe === 'function') {
+                    unsubscribeForeground = unsubscribe;
+                } else if (typeof unsubscribe === 'function') {
+                    unsubscribe();
+                }
+            })
+            .catch((error) => {
+                console.warn(
+                    'Foreground notification listener unavailable:',
+                    error
+                );
+            });
+
+        return () => {
+            active = false;
+            window.clearInterval(pollingId);
+            unsubscribeForeground();
+            disconnectNotificationSocket();
+        };
+    }, [user?.id, user?.userId]);
+
     function handleLogout() {
+        const authToken = localStorage.getItem('token');
+
+        // Start push cleanup in the background; never block the logout flow.
+        Promise.resolve(
+            disableWebPush({
+                authToken,
+                apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+            })
+        ).catch((error) => {
+            console.warn('Push device cleanup skipped:', error);
+        });
+
+        disconnectNotificationSocket();
         logout();
         window.location.replace('/login');
     }
@@ -208,10 +384,12 @@ function DashboardLayout({ children, title, subtitle }) {
                     <div className="brand-icon">
                         <FlaskConical size={24} />
                     </div>
+
                     <div>
                         <strong>LabResource</strong>
                         <span>Management Platform</span>
                     </div>
+
                     <button
                         className="mobile-close"
                         aria-label="Close menu"
@@ -238,11 +416,42 @@ function DashboardLayout({ children, title, subtitle }) {
                             <span>{label}</span>
                         </NavLink>
                     ))}
+
+                    <NavLink
+                        to="/notifications"
+                        className={({ isActive }) =>
+                            `sidebar-link ${isActive ? 'active' : ''}`
+                        }
+                        onClick={() => setSidebarOpen(false)}
+                    >
+                        <Bell size={19} />
+                        <span>Notifications</span>
+
+                        {unreadCount > 0 && (
+                            <span className="sidebar-notification-count">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
+                    </NavLink>
+
+                    <NavLink
+                        to="/notification-preferences"
+                        className={({ isActive }) =>
+                            `sidebar-link ${isActive ? 'active' : ''}`
+                        }
+                        onClick={() => setSidebarOpen(false)}
+                    >
+                        <Bell size={19} />
+                        <span>Notification Settings</span>
+                    </NavLink>
                 </nav>
 
                 <div className="sidebar-bottom">
                     <div className="sidebar-user">
-                        <div className="avatar">{name.charAt(0).toUpperCase()}</div>
+                        <div className="avatar">
+                            {name.charAt(0).toUpperCase()}
+                        </div>
+
                         <div className="sidebar-user-info">
                             <strong>{name}</strong>
                             <span>{getRoleLabel(user)}</span>
@@ -273,11 +482,24 @@ function DashboardLayout({ children, title, subtitle }) {
                     </div>
 
                     <div className="topbar-right">
-            <span className="system-status">
-              <span className="online-dot" />
-              Lab portal
-            </span>
-                        <div className="topbar-avatar">{name.charAt(0).toUpperCase()}</div>
+                        <span className="system-status">
+                            <span className="online-dot" />
+                            Lab portal
+                        </span>
+
+                        <NotificationBell
+                            unreadCount={unreadCount}
+                            onUnreadCountChange={setUnreadCount}
+                        />
+
+                        <Link
+                            to="/profile"
+                            className="topbar-avatar"
+                            aria-label="Open my profile"
+                            title="My Profile"
+                        >
+                            {name.charAt(0).toUpperCase()}
+                        </Link>
                     </div>
                 </header>
 
@@ -289,6 +511,7 @@ function DashboardLayout({ children, title, subtitle }) {
                             <p className="page-subtitle">{subtitle}</p>
                         </div>
                     </div>
+
                     {children}
                 </main>
 
@@ -301,6 +524,38 @@ function DashboardLayout({ children, title, subtitle }) {
 }
 
 function Dashboard() {
+    const { user } = useAuth();
+    const role = getRoleKey(user);
+
+    if (['RESEARCHER_STUDENT', 'LAB_MANAGER', 'DEPARTMENT_HEAD'].includes(role)) {
+        const config = {
+            RESEARCHER_STUDENT: { title: 'Researcher / Student Dashboard', subtitle: 'Your bookings, availability, usage and equipment recommendations.' },
+            LAB_MANAGER: { title: 'Lab Manager Dashboard', subtitle: 'Institution utilization, booking approvals and maintenance overview.' },
+            DEPARTMENT_HEAD: { title: 'Department Head Dashboard', subtitle: 'Department utilization, maintenance and sharing overview.' },
+        }[role];
+
+        return (
+            <DashboardLayout title={config.title} subtitle={config.subtitle}>
+                <RoleDashboardContent />
+            </DashboardLayout>
+        );
+    }
+
+    if (['INSTITUTION_ADMIN', 'SYSTEM_ADMIN'].includes(role)) {
+        return (
+            <DashboardLayout
+                title={role === 'SYSTEM_ADMIN' ? 'System Administration' : 'Institution Overview'}
+                subtitle="Institution utilization, sharing, procurement, lifecycle and system monitoring."
+            >
+                <InstitutionAdminDashboard user={user} />
+            </DashboardLayout>
+        );
+    }
+
+    return <LegacyDashboard />;
+}
+
+function LegacyDashboard() {
     const { user } = useAuth();
     const role = getRoleKey(user);
     const name = getDisplayName(user);
@@ -328,28 +583,37 @@ function Dashboard() {
 
             if (!active) return;
 
-            setHealth(results[0].status === 'fulfilled' ? 'UP' : 'unavailable');
+            setHealth(
+                results[0].status === 'fulfilled' ? 'UP' : 'unavailable'
+            );
 
             if (results[1].status === 'fulfilled') {
                 const data = results[1].value.data;
+
                 const list = Array.isArray(data)
                     ? data
                     : data?.content ?? data?.items ?? data?.data ?? [];
+
                 setEquipment(Array.isArray(list) ? list : []);
             }
 
             const bookingIndex = 2;
+
             if (isStudent || canReview) {
                 const result = results[bookingIndex];
 
                 if (result?.status === 'fulfilled') {
                     const data = result.value.data;
+
                     const list = Array.isArray(data)
                         ? data
                         : data?.content ?? data?.items ?? data?.data ?? [];
+
                     setBookings(Array.isArray(list) ? list : []);
                 } else {
-                    setLoadError('Bookings load nahi hui. Backend access aur role check karo.');
+                    setLoadError(
+                        'Bookings load nahi hui. Backend access aur role check karo.'
+                    );
                 }
             }
         }
@@ -363,7 +627,9 @@ function Dashboard() {
 
     const availableCount = equipment.filter((item) =>
         ['AVAILABLE', 'ACTIVE'].includes(
-            String(item.status ?? item.availabilityStatus ?? '').toUpperCase()
+            String(
+                item.status ?? item.availabilityStatus ?? ''
+            ).toUpperCase()
         )
     ).length;
 
@@ -445,11 +711,18 @@ function Dashboard() {
     ];
 
     return (
-        <DashboardLayout title={config.title} subtitle={config.subtitle}>
+        <DashboardLayout
+            title={config.title}
+            subtitle={config.subtitle}
+        >
             <section className="welcome-banner">
                 <div>
-                    <span className="welcome-tag">{getRoleLabel(user).toUpperCase()}</span>
+                    <span className="welcome-tag">
+                        {getRoleLabel(user).toUpperCase()}
+                    </span>
+
                     <h2>Welcome back, {name}!</h2>
+
                     <p>
                         {isStudent
                             ? 'Explore laboratory resources and track your booking requests.'
@@ -458,6 +731,7 @@ function Dashboard() {
                                 : 'View the available resource inventory and your account workspace.'}
                     </p>
                 </div>
+
                 <div className="welcome-art">
                     <FlaskConical size={74} strokeWidth={1.2} />
                 </div>
@@ -465,145 +739,138 @@ function Dashboard() {
 
             <div className="section-heading">
                 <div>
-                    <h2>Workspace overview</h2>
-                    <p>Information returned by the connected backend</p>
+                    <h2>Workspace Overview</h2>
+                    <p>Current platform and resource information</p>
                 </div>
-                <span className={`health-pill ${health === 'UP' ? 'healthy' : ''}`}>
-          <span className="online-dot" />
-          Backend: {health === 'checking' ? 'Checking' : health}
-        </span>
             </div>
 
-            <section className="stats-grid">
-                {stats.map(({ label, value, icon: Icon, tone, note }) => (
-                    <article className="stat-card" key={label}>
-                        <div className={`stat-icon ${tone}`}>
-                            <Icon size={21} />
-                        </div>
-                        <p className="stat-label">{label}</p>
-                        <div className="stat-value">{value}</div>
-                        <p className="stat-note">{note}</p>
-                    </article>
-                ))}
-            </section>
-
             {loadError && (
-                <div className="dashboard-notice">
-                    <AlertCircle size={18} />
-                    <span>{loadError}</span>
+                <div className="dashboard-alert">
+                    <AlertCircle size={17} />
+                    {loadError}
                 </div>
             )}
 
-            <section className="dashboard-grid">
-                <article className="panel-card">
+            <section className="stats-grid">
+                {stats.map((stat) => {
+                    const Icon = stat.icon;
+
+                    return (
+                        <article className={`stat-card ${stat.tone}`} key={stat.label}>
+                            <div className="stat-card-top">
+                                <span>{stat.label}</span>
+                                <div className="stat-icon">
+                                    <Icon size={20} />
+                                </div>
+                            </div>
+
+                            <strong>{stat.value}</strong>
+                            <p>{stat.note}</p>
+                        </article>
+                    );
+                })}
+            </section>
+
+            <section className="dashboard-content-grid">
+                <article className="dashboard-panel">
                     <div className="panel-heading">
                         <div>
-                            <h2>Recent equipment</h2>
-                            <p>Resource inventory returned by the API</p>
+                            <h3>Recent Equipment</h3>
+                            <p>Equipment available in your institution</p>
                         </div>
+
                         <NavLink to="/equipment" className="text-link">
                             View all <ArrowUpRight size={16} />
                         </NavLink>
                     </div>
 
-                    {equipment.length ? (
-                        <div className="table-scroll">
-                            <table className="data-table">
-                                <thead>
-                                <tr>
-                                    <th>Equipment</th>
-                                    <th>Location</th>
-                                    <th>Status</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {equipment.slice(0, 5).map((item, index) => (
-                                    <tr key={item.id ?? item.resourceId ?? index}>
-                                        <td>
-                                            <div className="table-primary">
-                                                <div className="table-item-icon">
-                                                    <Microscope size={17} />
-                                                </div>
-                                                <span>{item.name ?? item.resourceName ?? 'Equipment'}</span>
-                                            </div>
-                                        </td>
-                                        <td>{item.location ?? item.labName ?? '—'}</td>
-                                        <td>
-                        <span className="status-badge">
-                          {String(item.status ?? 'Unknown').replaceAll('_', ' ')}
-                        </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                    {equipment.length === 0 ? (
+                        <div className="empty-state">
+                            <Microscope size={28} />
+                            <p>No equipment records available.</p>
                         </div>
                     ) : (
-                        <div className="empty-state">
-                            <Search size={24} />
-                            <strong>No equipment data to show</strong>
-                            <p>The resource API returned no equipment records.</p>
-                            <NavLink to="/equipment" className="secondary-button">
-                                Open equipment
-                            </NavLink>
+                        <div className="equipment-preview-list">
+                            {equipment.slice(0, 5).map((item) => (
+                                <div
+                                    className="equipment-preview-item"
+                                    key={item.id}
+                                >
+                                    <div className="equipment-preview-icon">
+                                        <Microscope size={18} />
+                                    </div>
+
+                                    <div>
+                                        <strong>
+                                            {item.name || item.resourceName || 'Equipment'}
+                                        </strong>
+                                        <span>
+                                            {item.category || item.departmentName || 'Laboratory resource'}
+                                        </span>
+                                    </div>
+
+                                    <span className="equipment-status">
+                                        {item.status || item.availabilityStatus || 'UNKNOWN'}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </article>
 
-                <article className="panel-card">
+                <article className="dashboard-panel">
                     <div className="panel-heading">
                         <div>
-                            <h2>{canReview ? 'Recent booking requests' : 'My bookings'}</h2>
-                            <p>{canReview ? 'Latest booking activity' : 'Your latest reservations'}</p>
+                            <h3>Platform Status</h3>
+                            <p>Backend connectivity status</p>
                         </div>
-                        <NavLink to="/bookings" className="text-link">
-                            View all <ArrowUpRight size={16} />
-                        </NavLink>
                     </div>
 
-                    {bookings.length ? (
-                        <div className="booking-list">
-                            {bookings.slice(0, 5).map((booking, index) => (
-                                <div className="booking-row" key={booking.id ?? index}>
-                                    <div className="booking-icon">
-                                        <CalendarDays size={19} />
-                                    </div>
-                                    <div className="booking-info">
-                                        <strong>
-                                            {booking.resourceName ??
-                                                booking.resource?.name ??
-                                                'Equipment booking'}
-                                        </strong>
-                                        <span>
-                      {booking.startTime
-                          ? new Date(booking.startTime).toLocaleString()
-                          : 'Date not available'}
-                    </span>
-                                    </div>
-                                    <span className="status-badge">
-                    {String(booking.status ?? 'Unknown').replaceAll('_', ' ')}
-                  </span>
-                                </div>
-                            ))}
+                    <div className="platform-status-card">
+                        <div className={`platform-status-icon ${health}`}>
+                            {health === 'UP'
+                                ? <CheckCircle2 size={24} />
+                                : <AlertCircle size={24} />}
                         </div>
-                    ) : (
-                        <div className="empty-state">
-                            <CalendarDays size={24} />
-                            <strong>No booking data to show</strong>
+
+                        <div>
+                            <strong>
+                                {health === 'checking'
+                                    ? 'Checking backend'
+                                    : health === 'UP'
+                                        ? 'Backend connected'
+                                        : 'Backend unavailable'}
+                            </strong>
+
                             <p>
-                                {canReview
-                                    ? 'No bookings were returned by the backend.'
-                                    : isStudent
-                                        ? 'Your reservations will appear here.'
-                                        : 'Booking statistics are not available for this role yet.'}
+                                {health === 'UP'
+                                    ? 'The platform API is responding.'
+                                    : health === 'checking'
+                                        ? 'Waiting for API response.'
+                                        : 'Check that the Spring Boot backend is running.'}
                             </p>
-                            {(isStudent || canReview) && (
-                                <NavLink to="/bookings" className="secondary-button">
-                                    {canReview ? 'Review bookings' : 'View bookings'}
-                                </NavLink>
-                            )}
                         </div>
-                    )}
+                    </div>
+
+                    <div className="platform-quick-links">
+                        <NavLink to="/bookings">
+                            <CalendarDays size={17} />
+                            <span>Bookings</span>
+                            <ArrowUpRight size={15} />
+                        </NavLink>
+
+                        <NavLink to="/equipment">
+                            <Microscope size={17} />
+                            <span>Equipment</span>
+                            <ArrowUpRight size={15} />
+                        </NavLink>
+
+                        <NavLink to="/notifications">
+                            <Bell size={17} />
+                            <span>Notifications</span>
+                            <ArrowUpRight size={15} />
+                        </NavLink>
+                    </div>
                 </article>
             </section>
 
@@ -611,10 +878,14 @@ function Dashboard() {
                 <div className="system-strip-icon">
                     <Bell size={20} />
                 </div>
+
                 <div>
                     <strong>Laboratory resource workspace</strong>
-                    <p>Only data available from connected backend endpoints is displayed.</p>
+                    <p>
+                        Only data available from connected backend endpoints is displayed.
+                    </p>
                 </div>
+
                 <NavLink to="/equipment" className="text-link">
                     Explore equipment <ArrowUpRight size={16} />
                 </NavLink>
@@ -632,12 +903,23 @@ function AppRoutes() {
         <Routes>
             <Route
                 path="/"
-                element={<Navigate to={isLoggedIn ? '/dashboard' : '/login'} replace />}
+                element={
+                    <Navigate
+                        to={isLoggedIn ? '/dashboard' : '/login'}
+                        replace
+                    />
+                }
             />
+
             <Route
                 path="/login"
-                element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login />}
+                element={
+                    isLoggedIn
+                        ? <Navigate to="/dashboard" replace />
+                        : <Login />
+                }
             />
+
             <Route path="/register" element={<Register />} />
 
             <Route
@@ -676,6 +958,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+
             <Route
                 path="/live-monitoring"
                 element={
@@ -710,10 +993,10 @@ function AppRoutes() {
                         ]}
                     >
                         <DashboardLayout
-                            title="Utilization Reports"
-                            subtitle="Analyze scheduled bookings and actual equipment usage."
+                            title="Reports & Export"
+                            subtitle="Preview permitted reports and download PDF or Excel files."
                         >
-                            <ResourceUtilizationReport />
+                            <Reports />
                         </DashboardLayout>
                     </ProtectedRoute>
                 }
@@ -761,13 +1044,182 @@ function AppRoutes() {
             />
 
             <Route
+                path="/work-orders"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'LAB_MANAGER',
+                            'LAB_TECHNICIAN',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Work Orders"
+                            subtitle="Manage equipment maintenance work orders."
+                        >
+                            <WorkOrders />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T9 - Calibration Overview */}
+            <Route
+                path="/calibration-overview"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'LAB_MANAGER',
+                            'INSTITUTION_ADMIN',
+                            'SYSTEM_ADMIN',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Calibration Overview"
+                            subtitle="Track calibration status and upcoming due dates."
+                        >
+                            <CalibrationOverview />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T9 - Calibration Reminders */}
+            <Route
+                path="/calibration-reminders"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'LAB_MANAGER',
+                            'INSTITUTION_ADMIN',
+                            'SYSTEM_ADMIN',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Calibration Reminders"
+                            subtitle="Manage upcoming and overdue calibration renewals."
+                        >
+                            <CalibrationReminders />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T9 - Technician My Tasks */}
+            <Route
+                path="/my-tasks"
+                element={
+                    <ProtectedRoute allowedRoles={['LAB_TECHNICIAN']}>
+                        <DashboardLayout
+                            title="My Tasks"
+                            subtitle="Manage your assigned technician tasks."
+                        >
+                            <MyTasks />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T9 - Technician Workload */}
+            <Route
+                path="/technicians"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'LAB_MANAGER',
+                            'INSTITUTION_ADMIN',
+                            'SYSTEM_ADMIN',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Technician Workload"
+                            subtitle="Monitor technician assignments and workload."
+                        >
+                            <Technicians />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/maintenance-requests"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'RESEARCHER_STUDENT',
+                            'DEPARTMENT_HEAD',
+                            'LAB_TECHNICIAN',
+                            'LAB_MANAGER',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Maintenance Requests"
+                            subtitle="Report and manage equipment maintenance requests"
+                        >
+                            <MaintenanceRequests />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/maintenance-schedules"
+                element={
+                    <ProtectedRoute allowedRoles={['LAB_MANAGER']}>
+                        <DashboardLayout
+                            title="Preventive Maintenance"
+                            subtitle="Plan and manage recurring equipment maintenance"
+                        >
+                            <MaintenanceSchedules />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/maintenance-history"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'LAB_MANAGER',
+                            'LAB_TECHNICIAN',
+                            'INSTITUTION_ADMIN',
+                            'DEPARTMENT_HEAD',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Maintenance History"
+                            subtitle="Review maintenance records and equipment downtime"
+                        >
+                            <MaintenanceHistory />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/maintenance-overview"
+                element={
+                    <ProtectedRoute allowedRoles={['LAB_MANAGER']}>
+                        <DashboardLayout
+                            title="Maintenance Overview"
+                            subtitle="Institution maintenance performance and downtime analytics"
+                        >
+                            <MaintenanceOverview />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
                 path="/maintenance"
                 element={
                     <ProtectedRoute
                         allowedRoles={[
+                            'RESEARCHER_STUDENT',
                             'LAB_TECHNICIAN',
                             'LAB_MANAGER',
-                            'SYSTEM_ADMIN',
+                            'DEPARTMENT_HEAD',
+                            'INSTITUTION_ADMIN',
                         ]}
                     >
                         <DashboardLayout
@@ -780,6 +1232,96 @@ function AppRoutes() {
                 }
             />
 
+            {/* T10 - My Usage Charges */}
+            <Route
+                path="/my-usage-charges"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout
+                            title="My Usage Charges"
+                            subtitle="Review your equipment usage charges and billing records."
+                        >
+                            <MyUsageCharges />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T10 - Institution Cost Overview */}
+            <Route
+                path="/cost-overview"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={['INSTITUTION_ADMIN', 'SYSTEM_ADMIN']}
+                    >
+                        <DashboardLayout
+                            title="Cost Overview"
+                            subtitle="Analyze equipment usage costs and department allocation."
+                        >
+                            <CostOverview />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T10 - Department Budgets */}
+            <Route
+                path="/budgets"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'INSTITUTION_ADMIN',
+                            'SYSTEM_ADMIN',
+                            'DEPARTMENT_HEAD',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Department Budgets"
+                            subtitle="Monitor department budgets, utilization and remaining balances."
+                        >
+                            <Budgets />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T10 - Invoices */}
+            <Route
+                path="/invoices"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={[
+                            'INSTITUTION_ADMIN',
+                            'SYSTEM_ADMIN',
+                            'DEPARTMENT_HEAD',
+                        ]}
+                    >
+                        <DashboardLayout
+                            title="Invoices"
+                            subtitle="Review issued, received and department chargeback invoices."
+                        >
+                            <Invoices />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T10 - Financial Summary */}
+            <Route
+                path="/financial-summary"
+                element={
+                    <ProtectedRoute
+                        allowedRoles={['INSTITUTION_ADMIN', 'SYSTEM_ADMIN']}
+                    >
+                        <DashboardLayout
+                            title="Financial Summary"
+                            subtitle="Track institutional billing, collections and outstanding balances."
+                        >
+                            <FinancialSummary />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
 
             <Route
                 path="/profile"
@@ -795,9 +1337,46 @@ function AppRoutes() {
                 }
             />
 
+            {/* T13 - Notification Center */}
+            <Route
+                path="/notifications"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout
+                            title="Notification Center"
+                            subtitle="View and manage all your platform notifications."
+                        >
+                            <Notifications />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* T13 - Notification Preferences */}
+            <Route
+                path="/notification-preferences"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout
+                            title="Notification Preferences"
+                            subtitle="Manage how you receive platform notifications."
+                        >
+                            <NotificationPreferences />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
             {/* Public password recovery routes */}
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+                path="/forgot-password"
+                element={<ForgotPassword />}
+            />
+
+            <Route
+                path="/reset-password"
+                element={<ResetPassword />}
+            />
 
             {/* Google OAuth callback must be before the fallback route */}
             <Route
@@ -806,9 +1385,11 @@ function AppRoutes() {
             />
 
             {/* Keep the fallback route last */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route
+                path="*"
+                element={<Navigate to="/" replace />}
+            />
         </Routes>
-
     );
 }
 
